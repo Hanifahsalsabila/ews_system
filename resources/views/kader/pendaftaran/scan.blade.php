@@ -9,10 +9,7 @@
             <p class="text-slate-500 mt-1 font-medium">Scan QR Code warga atau masukkan NIK secara manual.</p>
         </div>
         <div>
-            <a href="{{ route('kader.warga.create') }}" class="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold py-2.5 px-4 rounded-xl transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                Daftar Warga Baru
-            </a>
+            <!-- Button removed due to Kader restricted access -->
         </div>
     </div>
 
@@ -116,9 +113,13 @@
                         if(html5QrcodeScanner) {
                             html5QrcodeScanner.pause();
                         }
-                        
-                        // Show scanning overlay
-                        alert("Membaca NIK: " + decodedText); // A simple alert for now, can be replaced by a nice toast
+
+                        // Extract the encrypted token from the QR URL.
+                        // QR codes now contain URLs like: http://domain.com/v/ENCRYPTED_TOKEN
+                        let nikOrToken = decodedText;
+                        if (decodedText.includes('/v/')) {
+                            nikOrToken = decodedText.split('/v/')[1];
+                        }
                         
                         // Send to server
                         fetch("{{ route('kader.pendaftaran.scan') }}", {
@@ -129,23 +130,23 @@
                                 "Accept": "application/json"
                             },
                             body: JSON.stringify({
-                                nik: decodedText,
+                                nik: nikOrToken,
                                 sesi_id: sessionId
                             })
                         })
                         .then(response => response.json())
                         .then(data => {
                             if(data.success) {
-                                alert('Berhasil: ' + data.message);
-                                window.location.reload(); // Reload to show in the recent list
+                                alert('✅ ' + data.message);
+                                window.location.reload();
                             } else {
-                                alert('Gagal: ' + data.message);
+                                alert('⚠️ ' + data.message);
                                 if(html5QrcodeScanner) html5QrcodeScanner.resume();
                             }
                         })
                         .catch(error => {
                             console.error("Error:", error);
-                            alert("Terjadi kesalahan sistem saat memproses NIK.");
+                            alert("Terjadi kesalahan sistem saat memproses QR Code.");
                             if(html5QrcodeScanner) html5QrcodeScanner.resume();
                         });
                     }

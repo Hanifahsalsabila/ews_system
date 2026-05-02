@@ -22,6 +22,10 @@ class DashboardController extends Controller
             return redirect()->route('kader.dashboard');
         }
 
+        if ($user->hasRole('orang_tua')) {
+            return redirect()->route('warga.dashboard');
+        }
+
         // Default fallback
         return view('dashboard');
     }

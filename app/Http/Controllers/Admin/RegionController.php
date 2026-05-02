@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 use App\Models\Region;
+use Illuminate\Validation\Rule;
 
 class RegionController extends Controller
 {
@@ -19,25 +20,26 @@ class RegionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('regions')->where(function ($query) use ($request) {
+                    return $query->where('type', $request->type)
+                                 ->where('parent_id', $request->parent_id);
+                })
+            ],
             'type' => 'required|in:dusun,rw,rt',
-            'parent_name' => 'nullable|string',
+            'parent_id' => 'required_unless:type,dusun|nullable|exists:regions,id',
+        ], [
+            'name.unique' => 'Nama wilayah tersebut sudah terdaftar di lokasi induk ini.',
+            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.'
         ]);
-
-        $parentId = null;
-        if (!empty($validated['parent_name'])) {
-            $parent = Region::where('name', $validated['parent_name'])->first();
-            if ($parent) {
-                $parentId = $parent->id;
-            } else {
-                return back()->withErrors(['parent_name' => 'Induk wilayah (' . $validated['parent_name'] . ') tidak ditemukan di sistem.']);
-            }
-        }
 
         Region::create([
             'name' => $validated['name'],
             'type' => $validated['type'],
-            'parent_id' => $parentId,
+            'parent_id' => $validated['parent_id'] ?? null,
         ]);
 
         return redirect()->back()->with('success', 'Wilayah berhasil ditambahkan.');
@@ -46,25 +48,26 @@ class RegionController extends Controller
     public function update(Request $request, Region $region)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('regions')->where(function ($query) use ($request) {
+                    return $query->where('type', $request->type)
+                                 ->where('parent_id', $request->parent_id);
+                })->ignore($region->id)
+            ],
             'type' => 'required|in:dusun,rw,rt',
-            'parent_name' => 'nullable|string',
+            'parent_id' => 'required_unless:type,dusun|nullable|exists:regions,id',
+        ], [
+            'name.unique' => 'Nama wilayah tersebut sudah terdaftar di lokasi induk ini.',
+            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.'
         ]);
-
-        $parentId = null;
-        if (!empty($validated['parent_name'])) {
-            $parent = Region::where('name', $validated['parent_name'])->first();
-            if ($parent) {
-                $parentId = $parent->id;
-            } else {
-                return back()->withErrors(['parent_name' => 'Induk wilayah (' . $validated['parent_name'] . ') tidak ditemukan di sistem.']);
-            }
-        }
 
         $region->update([
             'name' => $validated['name'],
             'type' => $validated['type'],
-            'parent_id' => $parentId,
+            'parent_id' => $validated['parent_id'] ?? null,
         ]);
 
         return redirect()->back()->with('success', 'Wilayah berhasil diperbarui.');

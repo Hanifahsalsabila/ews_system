@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('golongan_darah', 5)->nullable();
             $table->text('riwayat_penyakit')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Pemeriksaan extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use \OwenIt\Auditing\Auditable, SoftDeletes;
     protected $table = 'pemeriksaan';
 
     protected $fillable = [
@@ -26,6 +27,18 @@ class Pemeriksaan extends Model implements Auditable
         'catatan',
         'is_validated',
         'petugas_id',
+        // New fields
+        'vitamin_a',
+        'obat_cacing',
+        'asi_eksklusif',
+        'pmt',
+        'suplementasi_fe',
+        'status_tt',
+        'gula_darah',
+        'kolesterol',
+        'asam_urat',
+        'imt',
+        'tipe_kohort',
     ];
 
     public function warga()

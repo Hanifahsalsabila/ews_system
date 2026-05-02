@@ -22,9 +22,21 @@
 <body class="antialiased text-gray-800 bg-gray-50 flex min-h-screen">
 
     <!-- Left pane: Interactive Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white" x-data="loginForm()">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white relative" x-data="loginForm()">
+        
+        <!-- Dynamic Back Button (Top Left) -->
+        <a href="{{ url('/') }}" x-show="!selectedRole" class="group absolute top-6 left-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-400 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 transition-all duration-300 shadow-sm hover:shadow-md z-10">
+            <svg class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Beranda</span>
+        </a>
+
+        <button type="button" @click="resetRole()" x-show="selectedRole" x-cloak class="group absolute top-6 left-6 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold text-slate-400 hover:text-emerald-600 bg-slate-50 hover:bg-emerald-50 border border-slate-100 hover:border-emerald-200 transition-all duration-300 shadow-sm hover:shadow-md z-10">
+            <svg class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span>Pilih Peran</span>
+        </button>
+
         <div class="max-w-md w-full">
-            
+
             <div class="mb-10 text-center">
                 <a href="/" class="inline-flex items-center gap-2 mb-6">
                     <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
@@ -48,7 +60,7 @@
             <div x-show="!selectedRole" x-transition.opacity.duration.300ms class="grid grid-cols-1 gap-4">
                 
                 <!-- Pimpinan / Bidan -->
-                <button @click="selectRole('executive', 'pimpinan@eposyandu.com')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-emerald-500 hover:bg-emerald-50 transition duration-300">
+                <button @click="selectRole('executive', 'bidan@eposyandu.id')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-emerald-500 hover:bg-emerald-50 transition duration-300">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition">
@@ -66,7 +78,7 @@
                 </button>
 
                 <!-- Kader -->
-                <button @click="selectRole('kader', 'kader@eposyandu.com')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-blue-500 hover:bg-blue-50 transition duration-300">
+                <button @click="selectRole('kader', 'kader@eposyandu.id')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-blue-500 hover:bg-blue-50 transition duration-300">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition">
@@ -84,7 +96,7 @@
                 </button>
 
                 <!-- Orang Tua -->
-                <button @click="selectRole('warga', 'warga@eposyandu.com')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-purple-500 hover:bg-purple-50 transition duration-300">
+                <button @click="selectRole('warga', 'orangtua@eposyandu.id')" type="button" class="group relative px-6 py-5 border-2 border-gray-100 rounded-2xl text-left hover:border-purple-500 hover:bg-purple-50 transition duration-300">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 group-hover:scale-110 transition">
@@ -122,18 +134,19 @@
 
             <!-- Actual Login Form (Step 2) -->
             <div x-cloak x-show="selectedRole" x-transition.opacity.duration.300ms>
-                
-                <button @click="resetRole()" type="button" class="text-sm text-gray-500 hover:text-gray-800 mb-6 flex items-center gap-1 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Kembali pilih peran
-                </button>
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-5">
+                <form method="POST" action="{{ route('login') }}" class="space-y-5 mt-6">
                     @csrf
                     
                     <div>
-                        <label for="email" class="block font-medium text-sm text-gray-700">Email Address</label>
-                        <input id="email" x-model="emailInput" class="block mt-1 w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-3 px-4 transition" type="email" name="email" required autofocus autocomplete="username" />
+                        <label for="login_id" class="block font-medium text-sm text-gray-700" x-text="getLoginLabel()">Identitas Login</label>
+                        <div class="relative mt-1">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                <svg x-show="selectedRole !== 'warga'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <svg x-show="selectedRole === 'warga'" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                            </div>
+                            <input id="login_id" x-model="loginIdInput" class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-3 pl-12 pr-4 transition" :type="selectedRole === 'warga' ? 'text' : 'email'" name="login_id" required autofocus autocomplete="username" :placeholder="getLoginPlaceholder()" />
+                        </div>
                     </div>
 
                     <div>
@@ -191,16 +204,16 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('loginForm', () => ({
                 selectedRole: null,
-                emailInput: '',
+                loginIdInput: '',
                 
-                selectRole(roleType, defaultEmail) {
+                selectRole(roleType, defaultLogin) {
                     this.selectedRole = roleType;
-                    this.emailInput = defaultEmail;
+                    this.loginIdInput = defaultLogin;
                 },
                 
                 resetRole() {
                     this.selectedRole = null;
-                    this.emailInput = '';
+                    this.loginIdInput = '';
                 },
                 
                 getHeadingText() {
@@ -213,6 +226,16 @@
                 getSubText() {
                     if (this.selectedRole) return 'Silakan masukkan kredensial yang telah didaftarkan oleh Admin Desa.';
                     return 'Pilih entitas masuk untuk melihat antarmuka yang disesuaikan untuk Anda.';
+                },
+
+                getLoginLabel() {
+                    if (this.selectedRole === 'warga') return 'No. WhatsApp / Username / NIK';
+                    return 'Alamat Email';
+                },
+
+                getLoginPlaceholder() {
+                    if (this.selectedRole === 'warga') return 'Contoh: 0812..., mbahsiti01, atau 3201...';
+                    return 'email@eposyandu.id';
                 },
 
                 getBtnColor() {

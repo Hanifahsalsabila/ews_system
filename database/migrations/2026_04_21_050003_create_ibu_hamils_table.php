@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('hpl')->nullable();
             $table->integer('kehamilan_ke')->default(1);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

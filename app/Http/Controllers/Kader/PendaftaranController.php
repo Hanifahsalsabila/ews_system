@@ -34,14 +34,26 @@ class PendaftaranController extends Controller
             'sesi_id' => 'required|exists:sesi_posyandu,id',
         ]);
 
-        $warga = Warga::where('nik', $request->nik)->first();
+        $nikInput = $request->nik;
+
+        // If the scanned value is an encrypted token (from the new secure QR Code),
+        // decrypt it to get the actual NIK.
+        if (strlen($nikInput) > 16) {
+            try {
+                $nikInput = \Illuminate\Support\Facades\Crypt::decryptString($nikInput);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => 'QR Code tidak valid atau rusak.']);
+            }
+        }
+
+        $warga = Warga::where('nik', $nikInput)->first();
         if (!$warga) {
-            return response()->json(['success' => false, 'message' => 'Data warga tidak ditemukan.']);
+            return response()->json(['success' => false, 'message' => 'Data warga dengan NIK tersebut tidak ditemukan.']);
         }
 
         $exists = Absensi::where('warga_id', $warga->id)->where('sesi_posyandu_id', $request->sesi_id)->exists();
         if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Warga ' . $warga->nama . ' sudah terdaftar pada sesi ini.']);
+            return response()->json(['success' => false, 'message' => 'Warga ' . $warga->nama . ' sudah terdaftar hadir pada sesi ini.']);
         }
 
         $absensi = Absensi::create([
@@ -50,7 +62,7 @@ class PendaftaranController extends Controller
             'status' => 'hadir'
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Warga ' . $warga->nama . ' berhasil didaftarkan.', 'warga' => $warga]);
+        return response()->json(['success' => true, 'message' => 'Warga ' . $warga->nama . ' berhasil dicatat kehadirannya.', 'warga' => $warga]);
     }
 
     public function store(Request $request)

@@ -17,6 +17,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// Public Warga Verification Route
+Route::get('/v/{token}', [\App\Http\Controllers\Admin\WargaController::class, 'verify'])->name('warga.verify');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -35,6 +38,7 @@ Route::middleware(['auth', 'role:Super_Admin|Admin'])->prefix('admin')->name('ad
     Route::get('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('profile.edit');
     
     Route::resource('users', \App\Http\Controllers\Admin\UserController::class);
+    Route::patch('users/{user}/toggle-status', [\App\Http\Controllers\Admin\UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::resource('regions', RegionController::class);
     
     Route::post('wargas/import', [WargaController::class, 'import'])->name('wargas.import');
@@ -60,6 +64,7 @@ Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name(
     // Antenatal Care & Pemeriksaan
     Route::get('pemeriksaan/ibu-hamil', [\App\Http\Controllers\Bidan\PemeriksaanController::class, 'ibuHamil'])->name('pemeriksaan.ibu-hamil');
     Route::get('pemeriksaan/balita', [\App\Http\Controllers\Bidan\PemeriksaanController::class, 'balita'])->name('pemeriksaan.balita');
+    Route::get('pemeriksaan/lansia', [\App\Http\Controllers\Bidan\PemeriksaanController::class, 'lansia'])->name('pemeriksaan.lansia');
     Route::resource('pemeriksaan', \App\Http\Controllers\Bidan\PemeriksaanController::class);
     
     // KMS & Stunting
@@ -77,6 +82,12 @@ Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name(
     
     // Profile
     Route::get('profile', [\App\Http\Controllers\Bidan\ProfileController::class, 'edit'])->name('profile.edit');
+
+    // Kunjungan Rumah & EWS
+    Route::get('kunjungan', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'index'])->name('kunjungan.index');
+    Route::post('kunjungan/{kunjungan}/claim', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'claim'])->name('kunjungan.claim');
+    Route::get('kunjungan/{kunjungan}/edit', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'edit'])->name('kunjungan.edit');
+    Route::put('kunjungan/{kunjungan}', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'update'])->name('kunjungan.update');
 });
 
 Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader.')->group(function () {
@@ -89,8 +100,8 @@ Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader
     Route::post('pendaftaran/scan', [\App\Http\Controllers\Kader\PendaftaranController::class, 'scan'])->name('pendaftaran.scan');
     Route::post('pendaftaran/store', [\App\Http\Controllers\Kader\PendaftaranController::class, 'store'])->name('pendaftaran.store');
     
-    // Manajemen Warga
-    Route::resource('warga', \App\Http\Controllers\Kader\WargaController::class)->except(['show']);
+    // Buku Register Warga (Read-Only)
+    Route::resource('warga', \App\Http\Controllers\Kader\WargaController::class)->only(['index']);
     
     // Meja 2 & 3: Pengukuran & Penimbangan
     Route::get('pengukuran', [\App\Http\Controllers\Kader\PengukuranController::class, 'index'])->name('pengukuran.index');
@@ -101,4 +112,12 @@ Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader
     Route::get('profile', [\App\Http\Controllers\Kader\ProfileController::class, 'edit'])->name('profile.edit');
 });
 
+// ── Portal Warga / Orang Tua ──
+Route::middleware(['auth', 'role:orang_tua'])->prefix('warga')->name('warga.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Warga\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/riwayat', [\App\Http\Controllers\Warga\RiwayatController::class, 'index'])->name('riwayat');
+    Route::get('/badges', [\App\Http\Controllers\Warga\BadgeController::class, 'index'])->name('badges');
+});
+
 require __DIR__.'/auth.php';
+

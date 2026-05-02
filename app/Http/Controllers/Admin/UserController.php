@@ -11,10 +11,37 @@ use Illuminate\Validation\Rules;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->latest()->paginate(10);
-        $roles = Role::all();
+        $query = User::with('roles')
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('name', ['Super_Admin', 'Admin', 'Bidan_Desa', 'Kader_Posyandu']);
+            });
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Role filter
+        if ($request->has('role') && $request->role != '') {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('name', $request->role);
+            });
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status != '') {
+            $isActive = $request->status === 'aktif' ? 1 : 0;
+            $query->where('is_active', $isActive);
+        }
+
+        $users = $query->latest()->paginate(10)->withQueryString();
+        $roles = Role::whereIn('name', ['Super_Admin', 'Admin', 'Bidan_Desa', 'Kader_Posyandu'])->get();
         return view('admin.users.index', compact('users', 'roles'));
     }
 
@@ -72,5 +99,19 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('admin.users.index')
             ->with('success', 'Pengguna berhasil dihapus.');
+    }
+
+    public function toggleStatus(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Anda tidak bisa menonaktifkan akun Anda sendiri.');
+        }
+
+        $user->update([
+            'is_active' => !$user->is_active
+        ]);
+
+        $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->back()->with('success', "Akun pengguna berhasil {$status}.");
     }
 }

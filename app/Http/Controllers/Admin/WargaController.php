@@ -19,7 +19,7 @@ class WargaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Warga::with(['region', 'balita', 'ibuHamil', 'lansia']);
+        $query = Warga::with(['region.parent.parent', 'balita', 'ibuHamil', 'lansia']);
 
         if ($request->has('search')) {
             $search = $request->get('search');
@@ -198,11 +198,33 @@ class WargaController extends Controller
     }
 
     /**
-     * Generate QR Code SVG for a given NIK.
+     * Generate Secure QR Code SVG for a given NIK.
      */
     public function qrCode($nik)
     {
-        return response(\SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate($nik))
+        // Encrypt the NIK
+        $encryptedToken = \Illuminate\Support\Facades\Crypt::encryptString($nik);
+        
+        // Generate the URL for the QR code
+        $url = route('warga.verify', ['token' => $encryptedToken]);
+        
+        // Generate QR code containing the secure URL
+        return response(\SimpleSoftwareIO\QrCode\Facades\QrCode::size(250)->margin(2)->generate($url))
             ->header('Content-Type', 'image/svg+xml');
+    }
+
+    /**
+     * Verify and show public profile from secure QR token.
+     */
+    public function verify($token)
+    {
+        try {
+            $nik = \Illuminate\Support\Facades\Crypt::decryptString($token);
+            $warga = Warga::with(['region.parent.parent', 'balita', 'ibuHamil', 'lansia'])->where('nik', $nik)->firstOrFail();
+            
+            return view('warga.verify', compact('warga'));
+        } catch (\Exception $e) {
+            abort(404, 'Kode QR tidak valid atau telah kadaluarsa.');
+        }
     }
 }

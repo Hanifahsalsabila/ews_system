@@ -23,6 +23,12 @@
     
     <div class="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-8 sm:p-12 relative z-10">
         
+        <!-- Back to Home -->
+        <a href="{{ url('/') }}" class="group inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-300 mb-6 -ml-1">
+            <svg class="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Kembali ke Beranda
+        </a>
+
         <!-- Logo -->
         <div class="flex justify-center mb-8">
             <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center border border-emerald-100 text-emerald-600 shadow-sm shadow-emerald-600/10">
@@ -55,7 +61,7 @@
                         </svg>
                     </div>
                     <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" 
-                        class="block w-full pl-10 px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-colors sm:text-sm placeholder-slate-400" placeholder="admin@posyandu.id">
+                        class="block w-full pl-10 px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-colors sm:text-sm placeholder-slate-400" placeholder="admin@eposyandu.id">
                 </div>
                 @error('email')
                     <p class="mt-2 text-sm text-red-500">{{ $message }}</p>

@@ -57,6 +57,36 @@
     </div>
     @endif
 
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+        <form action="{{ route('admin.users.index') }}" method="GET" class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau email..." class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="w-full md:w-48">
+                <select name="role" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" onchange="this.form.submit()">
+                    <option value="">Semua Peran</option>
+                    @foreach($roles as $role)
+                    <option value="{{ $role->name }}" {{ request('role') == $role->name ? 'selected' : '' }}>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="w-full md:w-48">
+                <select name="status" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" onchange="this.form.submit()">
+                    <option value="">Semua Status</option>
+                    <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                    <option value="nonaktif" {{ request('status') == 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors">
+                Filter
+            </button>
+            <a href="{{ route('admin.users.index') }}" class="px-4 py-2 border border-gray-200 text-gray-500 hover:bg-gray-50 text-sm font-bold rounded-xl transition-colors text-center">
+                Reset
+            </a>
+        </form>
+    </div>
+
     <!-- Table -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
@@ -65,20 +95,20 @@
                     <tr class="bg-gray-50/50 border-b border-gray-100">
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Pengguna</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Peran (Role)</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Bergabung</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @forelse($users as $user)
-                    <tr class="hover:bg-gray-50/50 transition-colors group">
+                    <tr class="hover:bg-gray-50/50 transition-colors group {{ !$user->is_active ? 'opacity-75 bg-slate-50' : '' }}">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold shrink-0">
+                                <div class="w-10 h-10 rounded-full {{ $user->is_active ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500' }} flex items-center justify-center font-bold shrink-0">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-gray-800">{{ $user->name }}</p>
+                                    <p class="text-sm font-bold {{ $user->is_active ? 'text-gray-800' : 'text-gray-500' }}">{{ $user->name }}</p>
                                     <p class="text-xs text-gray-400 font-medium">{{ $user->email }}</p>
                                 </div>
                             </div>
@@ -94,18 +124,46 @@
                                 @endif
                             @endforeach
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ $user->created_at->format('d M Y') }}
+                        <td class="px-6 py-4">
+                            @if($user->is_active)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Aktif
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                    Nonaktif
+                                </span>
+                            @endif
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                @if($user->last_login_at)
+                                    Login: {{ $user->last_login_at->diffForHumans() }}
+                                @else
+                                    Belum pernah login
+                                @endif
+                            </p>
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button @click="openModal({{ json_encode($user->load('roles')) }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                <form action="{{ route('admin.users.toggle-status', $user) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="p-2 {{ $user->is_active ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-lg transition-colors tooltip" title="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
+                                        @if($user->is_active)
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        @else
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        @endif
+                                    </button>
+                                </form>
+                                <button @click="openModal({{ json_encode($user->load('roles')) }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors tooltip" title="Edit">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
-                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus pengguna ini secara permanen?')">
+                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Hapus pengguna ini secara permanen?')" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                    <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors tooltip" title="Hapus">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </form>
@@ -152,8 +210,14 @@
                         <label class="block text-xs font-bold text-gray-500 mb-1">Alamat Email</label>
                         <input type="email" name="email" x-model="formData.email" required class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Password <span x-show="!editMode" class="text-gray-400 font-normal">(Opsional, default: password)</span> <span x-show="editMode" class="text-gray-400 font-normal">(Kosongkan jika tidak diubah)</span></label>
+                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100" x-show="!editMode">
+                        <p class="text-xs text-amber-700 font-medium flex gap-2">
+                            <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            Password default adalah <b>password</b>. Pengguna dapat mengubahnya setelah login.
+                        </p>
+                    </div>
+                    <div x-show="editMode">
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Ganti Password <span class="text-gray-400 font-normal">(Kosongkan jika tidak diubah)</span></label>
                         <input type="password" name="password" x-model="formData.password" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>

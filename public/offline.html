@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Offline - E-Posyandu</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #ecfdf5, #f0fdf4, #f0fdfa);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #334155;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 400px;
+        }
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        p {
+            font-size: 0.875rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .retry-btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: #059669;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+            transition: transform 0.2s;
+        }
+        .retry-btn:hover {
+            transform: translateY(-2px);
+        }
+        .status {
+            margin-top: 1.5rem;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📡</div>
+        <h1>Anda Sedang Offline</h1>
+        <p>Sepertinya koneksi internet Anda sedang terputus. Data yang sudah dimuat sebelumnya mungkin masih tersedia, tetapi fitur baru tidak bisa diakses.</p>
+        <a href="/" class="retry-btn" onclick="window.location.reload(); return false;">Coba Lagi</a>
+        <div class="status">E-Posyandu Progressive Web App</div>
+    </div>
+</body>
+</html>

@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Warga extends Model implements Auditable
 {
-    use \OwenIt\Auditing\Auditable;
+    use \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $table = 'warga';
 
@@ -17,12 +18,18 @@ class Warga extends Model implements Auditable
         'nama',
         'alamat_lengkap',
         'nomor_telepon',
-        'region_id'
+        'region_id',
+        'user_id',
     ];
 
     public function region()
     {
         return $this->belongsTo(Region::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function balita()
@@ -43,5 +50,10 @@ class Warga extends Model implements Auditable
     public function pemeriksaans()
     {
         return $this->hasMany(Pemeriksaan::class);
+    }
+
+    public function kunjunganRumahs()
+    {
+        return $this->hasMany(KunjunganRumah::class);
     }
 }

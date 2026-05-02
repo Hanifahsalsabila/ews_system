@@ -18,7 +18,9 @@ return new class extends Migration
             $table->text('alamat_lengkap')->nullable();
             $table->string('nomor_telepon', 20)->nullable();
             $table->foreignId('region_id')->constrained('regions')->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@eposyandu.id'],
             [
                 'name' => 'Admin Utama',
+                'username' => 'admin.utama',
                 'password' => bcrypt('password'),
             ]
         );
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'bidan@eposyandu.id'],
             [
                 'name' => 'Bidan Desa',
+                'username' => 'bidan.desa',
                 'password' => bcrypt('password'),
             ]
         );
@@ -40,9 +42,19 @@ class DatabaseSeeder extends Seeder
             ['email' => 'kader@eposyandu.id'],
             [
                 'name' => 'Kader Posyandu',
+                'username' => 'kader.melati',
                 'password' => bcrypt('password'),
             ]
         );
         $kader->assignRole('Kader_Posyandu');
+
+        $orangtua = User::firstOrCreate(
+            ['username' => 'mbahsiti01'],
+            [
+                'name' => 'orang tua',
+                'password' => bcrypt('password'),
+            ]
+        );
+        $orangtua->assignRole('orang_tua');
     }
 }
