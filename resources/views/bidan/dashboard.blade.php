@@ -17,7 +17,7 @@
 
             <!-- Metrics Cards -->
             <h3 class="text-lg font-black text-slate-800 tracking-tight mt-8 mb-4">Ringkasan Statistik</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 <!-- Card 1 -->
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
@@ -45,6 +45,21 @@
                         </div>
                         <div class="text-3xl font-black text-slate-800 mb-1">{{ $totalIbuHamil }}</div>
                         <div class="text-sm font-medium text-slate-500">Total Ibu Hamil</div>
+                    </div>
+                </div>
+
+                <!-- Card Lansia -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-50 rounded-full group-hover:scale-150 transition-transform duration-500 ease-out z-0"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sasaran</span>
+                        </div>
+                        <div class="text-3xl font-black text-slate-800 mb-1">{{ $totalLansia }}</div>
+                        <div class="text-sm font-medium text-slate-500">Total Lansia</div>
                     </div>
                 </div>
 

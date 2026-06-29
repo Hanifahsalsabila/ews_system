@@ -110,6 +110,7 @@ Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader
     // Buku Register Warga
     Route::post('warga/{warga}/generate-account', [\App\Http\Controllers\Kader\WargaController::class, 'generateAccount'])->name('warga.generate-account');
     Route::resource('warga', \App\Http\Controllers\Kader\WargaController::class);
+    Route::get('warga/qr/{nik}', [\App\Http\Controllers\Admin\WargaController::class, 'qrCode'])->name('warga.qr');
     
     // Meja 2 & 3: Pengukuran & Penimbangan
     Route::get('pengukuran', [\App\Http\Controllers\Kader\PengukuranController::class, 'index'])->name('pengukuran.index');

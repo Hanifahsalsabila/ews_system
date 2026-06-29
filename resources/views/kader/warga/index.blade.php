@@ -9,17 +9,17 @@
         hpht: '', hpl: '', kehamilan_ke: '',
         golongan_darah: '', riwayat_penyakit: ''
     },
-    
-    
-    
+    qrModal: false,
+    qrData: { name: '', nik: '', code: '' },
     openModal(warga = null) {
         if (warga) {
             this.editMode = true;
             this.formData = { ...warga };
-            if (warga.balita) this.cohortType = 'balita', Object.assign(this.formData, warga.balita);
-            else if (warga.ibu_hamil) this.cohortType = 'ibu_hamil', Object.assign(this.formData, warga.ibu_hamil);
-            else if (warga.lansia) this.cohortType = 'lansia', Object.assign(this.formData, warga.lansia);
-            else this.cohortType = 'umum';
+            if (warga.balita) { this.cohortType = 'balita'; Object.assign(this.formData, warga.balita); }
+            else if (warga.ibu_hamil) { this.cohortType = 'ibu_hamil'; Object.assign(this.formData, warga.ibu_hamil); }
+            else if (warga.lansia) { this.cohortType = 'lansia'; Object.assign(this.formData, warga.lansia); }
+            else { this.cohortType = 'umum'; }
+            this.formData.id = warga.id; // Restore correct ID
         } else {
             this.editMode = false;
             this.cohortType = 'umum';
@@ -88,6 +88,15 @@
                             <td class="py-4 px-6">
                                 <div class="font-bold text-slate-800">{{ $warga->nama }}</div>
                                 <div class="text-sm text-slate-500 mt-1 font-mono">{{ $warga->nik }}</div>
+                                <div class="text-xs text-slate-400 mt-1">
+                                    @if($warga->jenis_kelamin)
+                                        {{ $warga->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                    @endif
+                                    @if($warga->jenis_kelamin && $warga->tanggal_lahir) &bull; @endif
+                                    @if($warga->tanggal_lahir)
+                                        {{ \Carbon\Carbon::parse($warga->tanggal_lahir)->age }} Thn
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-4 px-6">
                                 @if($warga->balita)
@@ -110,7 +119,7 @@
                             </td>
                             <td class="py-4 px-6">
                                 <span class="text-sm font-medium text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">
-                                    Dusun {{ $warga->region->dusun_name ?? '-' }} (RW {{ str_pad($warga->region->rw_name ?? 0, 2, '0', STR_PAD_LEFT) }} / RT {{ str_pad($warga->region->rt_name ?? 0, 2, '0', STR_PAD_LEFT) }})
+                                    Dusun {{ $warga->region->dusun_name ?? '-' }} ({{ $warga->region->rw_name ?? '-' }} / {{ $warga->region->rt_name ?? '-' }})
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-right">
@@ -127,8 +136,11 @@
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                                         </button>
                                     @endif
-                                    <button @click="openModal({{ json_encode($warga->load(['balita', 'ibuHamil', 'lansia'])) }})" title="Edit Data" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
+                                    <button @click="openModal({{ json_encode($warga) }})" title="Edit Data" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </button>
+                                    <button @click="showQR({{ json_encode($warga) }})" title="Lihat QR Code" class="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-transparent hover:border-purple-100">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                     </button>
                                     <form action="{{ route('kader.warga.destroy', $warga) }}" method="POST" onsubmit="return confirm('Hapus data warga dan seluruh riwayat kohortnya?')">
                                         @csrf
@@ -198,9 +210,7 @@
 
             <form :action="editMode ? '{{ url('kader/warga') }}/' + formData.id : '{{ route('kader.warga.store') }}'" method="POST" class="flex flex-col flex-1 overflow-hidden">
                 @csrf
-                <template x-if="editMode">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
+                <input type="hidden" name="_method" value="PUT" x-bind:disabled="!editMode">
 
                 <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -301,8 +311,28 @@
                                     </div>
                                 </div>
                                     
+                                <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-600 mb-1.5">No. Telepon / WhatsApp</label>
+                                        <label class="block text-xs font-bold text-gray-600 mb-1.5">Jenis Kelamin</label>
+                                        <div class="flex gap-2">
+                                            <label class="flex-1 text-center py-2.5 px-3 bg-slate-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors" :class="formData.jenis_kelamin == 'L' ? 'ring-2 ring-emerald-500 bg-emerald-50 border-emerald-200' : ''">
+                                                <input type="radio" name="jenis_kelamin" value="L" x-model="formData.jenis_kelamin" class="sr-only">
+                                                <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'L' ? 'text-emerald-700' : 'text-gray-600'">Laki-laki</span>
+                                            </label>
+                                            <label class="flex-1 text-center py-2.5 px-3 bg-slate-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors" :class="formData.jenis_kelamin == 'P' ? 'ring-2 ring-rose-400 bg-rose-50 border-rose-200' : ''">
+                                                <input type="radio" name="jenis_kelamin" value="P" x-model="formData.jenis_kelamin" class="sr-only">
+                                                <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'P' ? 'text-rose-700' : 'text-gray-600'">Perempuan</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-600 mb-1.5">Tanggal Lahir</label>
+                                        <input type="date" name="tanggal_lahir" x-model="formData.tanggal_lahir" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700">
+                                    </div>
+                                </div>
+                                    
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1.5">No. Telepon / WhatsApp</label>
                                         <div class="relative">
                                             <input type="text" name="nomor_telepon" x-model="formData.nomor_telepon" class="w-full bg-slate-50 border-gray-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono placeholder-gray-300" placeholder="08xxxxxxxxxx">
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -377,25 +407,6 @@
                                         </h5>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Jenis Kelamin</label>
-                                                <div class="flex gap-2">
-                                                    <label class="flex-1 text-center py-2.5 px-3 bg-white border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" :class="formData.jenis_kelamin == 'L' ? 'ring-2 ring-blue-500 bg-blue-50' : ''">
-                                                        <input type="radio" name="jenis_kelamin" value="L" x-model="formData.jenis_kelamin" class="sr-only">
-                                                        <span class="text-xs font-bold text-blue-900">Laki-laki</span>
-                                                    </label>
-                                                    <label class="flex-1 text-center py-2.5 px-3 bg-white border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" :class="formData.jenis_kelamin == 'P' ? 'ring-2 ring-rose-400 bg-rose-50 border-rose-200' : ''">
-                                                        <input type="radio" name="jenis_kelamin" value="P" x-model="formData.jenis_kelamin" class="sr-only">
-                                                        <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'P' ? 'text-rose-700' : 'text-blue-900'">Perempuan</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Tanggal Lahir</label>
-                                                <input type="date" name="tanggal_lahir" x-model="formData.tanggal_lahir" class="w-full bg-white border-blue-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-blue-900">
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
                                                 <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Nama Ayah</label>
                                                 <input type="text" name="nama_ayah" x-model="formData.nama_ayah" placeholder="Contoh: Budi Santoso" class="w-full bg-white border-blue-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                                             </div>
@@ -467,6 +478,43 @@
         </div>
     </div>
 
+    <!-- QR Code Modal -->
+    <div x-show="qrModal" 
+         class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         x-cloak>
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+             @click.away="qrModal = false">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4 text-purple-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                </div>
+                <h3 class="text-xl font-black text-slate-800" x-text="qrData.name"></h3>
+                <p class="text-sm font-mono text-slate-500 mt-1" x-text="qrData.nik"></p>
+                
+                <div class="mt-6 p-4 bg-slate-50 rounded-2xl flex justify-center items-center min-h-[200px]">
+                    <template x-if="qrModal">
+                        <img :src="`{{ url('kader/warga/qr') }}/${qrData.nik}`" alt="QR Code" class="w-48 h-48 mix-blend-multiply">
+                    </template>
+                </div>
+                
+                <div class="mt-6">
+                    <button @click="qrModal = false" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     </div>
 </x-kader-layout>

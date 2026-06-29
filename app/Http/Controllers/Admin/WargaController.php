@@ -52,10 +52,10 @@ class WargaController extends Controller
             'region_id' => 'required|exists:regions,id',
             'cohort_type' => 'required|in:balita,ibu_hamil,lansia,umum',
             
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tanggal_lahir' => 'nullable|date',
+            
             // Balita specific
-            // Balita specific
-            'jenis_kelamin' => 'nullable|required_if:cohort_type,balita|in:L,P',
-            'tanggal_lahir' => 'nullable|required_if:cohort_type,balita|date',
             'nama_ayah' => 'nullable|string|max:255',
             'nama_ibu' => 'nullable|string|max:255',
             
@@ -77,13 +77,13 @@ class WargaController extends Controller
                 'alamat_lengkap' => $validated['alamat_lengkap'],
                 'nomor_telepon' => $validated['nomor_telepon'],
                 'region_id' => $validated['region_id'],
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
             ]);
 
             if ($validated['cohort_type'] === 'balita') {
                 Balita::create([
                     'warga_id' => $warga->id,
-                    'jenis_kelamin' => $validated['jenis_kelamin'],
-                    'tanggal_lahir' => $validated['tanggal_lahir'],
                     'nama_ayah' => $validated['nama_ayah'],
                     'nama_ibu' => $validated['nama_ibu'],
                 ]);
@@ -108,6 +108,15 @@ class WargaController extends Controller
             DB::rollBack();
             return redirect()->back()->withErrors(['error' => 'Gagal menyimpan data: ' . $e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Warga $warga)
+    {
+        // We use modals for viewing/editing, so redirect direct access to index
+        return redirect()->route('admin.wargas.index')->with('success', 'Menampilkan data warga di tabel.');
     }
 
     /**
@@ -142,12 +151,12 @@ class WargaController extends Controller
                 'alamat_lengkap' => $validated['alamat_lengkap'],
                 'nomor_telepon' => $validated['nomor_telepon'],
                 'region_id' => $validated['region_id'],
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
             ]);
 
             if ($warga->balita) {
                 $warga->balita->update([
-                    'jenis_kelamin' => $validated['jenis_kelamin'],
-                    'tanggal_lahir' => $validated['tanggal_lahir'],
                     'nama_ayah' => $validated['nama_ayah'],
                     'nama_ibu' => $validated['nama_ibu'],
                 ]);
@@ -187,7 +196,7 @@ class WargaController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+            'file' => 'required|file|max:2048',
         ]);
 
         try {

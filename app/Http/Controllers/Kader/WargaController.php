@@ -41,9 +41,10 @@ class WargaController extends Controller
             'region_id' => 'required|exists:regions,id',
             'cohort_type' => 'required|in:balita,ibu_hamil,lansia,umum',
             
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tanggal_lahir' => 'nullable|date',
+            
             // Balita specific
-            'jenis_kelamin' => 'nullable|required_if:cohort_type,balita|in:L,P',
-            'tanggal_lahir' => 'nullable|required_if:cohort_type,balita|date',
             'nama_ayah' => 'nullable|string|max:255',
             'nama_ibu' => 'nullable|string|max:255',
             
@@ -65,13 +66,13 @@ class WargaController extends Controller
                 'alamat_lengkap' => $validated['alamat_lengkap'],
                 'nomor_telepon' => $validated['nomor_telepon'],
                 'region_id' => $validated['region_id'],
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
             ]);
 
             if ($validated['cohort_type'] === 'balita') {
                 Balita::create([
                     'warga_id' => $warga->id,
-                    'jenis_kelamin' => $validated['jenis_kelamin'],
-                    'tanggal_lahir' => $validated['tanggal_lahir'],
                     'nama_ayah' => $validated['nama_ayah'],
                     'nama_ibu' => $validated['nama_ibu'],
                 ]);
@@ -127,12 +128,12 @@ class WargaController extends Controller
                 'alamat_lengkap' => $validated['alamat_lengkap'],
                 'nomor_telepon' => $validated['nomor_telepon'],
                 'region_id' => $validated['region_id'],
+                'jenis_kelamin' => $validated['jenis_kelamin'] ?? null,
+                'tanggal_lahir' => $validated['tanggal_lahir'] ?? null,
             ]);
 
             if ($warga->balita) {
                 $warga->balita->update([
-                    'jenis_kelamin' => $validated['jenis_kelamin'],
-                    'tanggal_lahir' => $validated['tanggal_lahir'],
                     'nama_ayah' => $validated['nama_ayah'],
                     'nama_ibu' => $validated['nama_ibu'],
                 ]);

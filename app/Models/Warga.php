@@ -39,6 +39,8 @@ class Warga extends Model implements Auditable
         'nama',
         'alamat_lengkap',
         'nomor_telepon',
+        'jenis_kelamin',
+        'tanggal_lahir',
         'region_id',
         'user_id',
     ];

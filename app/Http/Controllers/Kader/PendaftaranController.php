@@ -36,6 +36,18 @@ class PendaftaranController extends Controller
 
         $nikInput = $request->nik;
 
+        // Jika input berupa URL, ekstrak token dari path segment setelah '/v/'
+        if (str_starts_with($nikInput, 'http://') || str_starts_with($nikInput, 'https://')) {
+            $path = parse_url($nikInput, PHP_URL_PATH);
+            $segments = explode('/', trim($path, '/'));
+            $vIndex = array_search('v', $segments);
+            if ($vIndex !== false && isset($segments[$vIndex + 1])) {
+                $nikInput = $segments[$vIndex + 1];
+            } else {
+                $nikInput = end($segments);
+            }
+        }
+
         // Try to decode the scanned QR value
         // Format 1 (New - Short Signed Token): base64(NIK):hmac_signature_prefix
         // Format 2 (Legacy - Encrypted): Crypt::encryptString output (200+ chars)

@@ -4,8 +4,10 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class WargaTemplateExport implements FromArray, WithHeadings
+class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatting
 {
     public function headings(): array
     {
@@ -14,7 +16,12 @@ class WargaTemplateExport implements FromArray, WithHeadings
             'NAMA_WARGA',
             'ALAMAT_LENGKAP',
             'NOMOR_TELEPON',
-            'NAMA_WILAYAH'
+            'DUSUN',
+            'RW',
+            'RT',
+            'KOHORT',
+            'JENIS_KELAMIN',
+            'TANGGAL_LAHIR'
         ];
     }
 
@@ -26,15 +33,48 @@ class WargaTemplateExport implements FromArray, WithHeadings
                 'Budi Santoso',
                 'Jl. Melati No 12',
                 '081234567890',
-                'RT 01'
+                'Mungkid',
+                '01',
+                '01',
+                'Umum',
+                '',
+                ''
             ],
             [
                 '3501234567890002',
                 'Siti Aminah',
                 'Jl. Mawar No 4',
                 '081987654321',
-                'RT 02'
+                'Mungkid',
+                '01',
+                '02',
+                'Ibu Hamil',
+                'P',
+                '1995-05-15'
+            ],
+            [
+                '3501234567890003',
+                'Ahmad',
+                'Jl. Mawar No 4',
+                '',
+                'Mungkid',
+                '01',
+                '02',
+                'Balita',
+                'L',
+                '2024-01-10'
             ]
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'A' => NumberFormat::FORMAT_TEXT,
+            'D' => NumberFormat::FORMAT_TEXT,
+            'F' => NumberFormat::FORMAT_TEXT,
+            'G' => NumberFormat::FORMAT_TEXT,
+            'J' => NumberFormat::FORMAT_TEXT,
         ];
     }
 }

@@ -13,8 +13,6 @@ class Balita extends Model
 
     protected $fillable = [
         'warga_id',
-        'jenis_kelamin',
-        'tanggal_lahir',
         'nama_ayah',
         'nama_ibu'
     ];
@@ -29,6 +27,6 @@ class Balita extends Model
      */
     public function getUmurBulanAttribute(): int
     {
-        return (int) \Carbon\Carbon::parse($this->tanggal_lahir)->diffInMonths(now());
+        return (int) \Carbon\Carbon::parse($this->warga->tanggal_lahir)->diffInMonths(now());
     }
 }

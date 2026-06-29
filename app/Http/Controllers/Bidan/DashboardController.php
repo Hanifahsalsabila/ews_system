@@ -16,6 +16,7 @@ class DashboardController extends Controller
     {
         $totalBalita = Balita::count();
         $totalIbuHamil = IbuHamil::count();
+        $totalLansia = \App\Models\Lansia::count();
         
         $totalWarga = Warga::count();
         if ($totalWarga == 0) $totalWarga = 1; // Prevent division by zero
@@ -50,7 +51,7 @@ class DashboardController extends Controller
         }
 
         return view('bidan.dashboard', compact(
-            'totalBalita', 'totalIbuHamil', 'persentaseKehadiran', 'angkaStunting',
+            'totalBalita', 'totalIbuHamil', 'totalLansia', 'persentaseKehadiran', 'angkaStunting',
             'chartLabels', 'attendanceData', 'stuntingData'
         ));
     }

@@ -104,20 +104,6 @@
                         <svg class="w-5 h-5 mr-3 {{ request()->routeIs('bidan.pelaporan.*') ? 'text-emerald-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Export Laporan SIP
                     </a>
-                    
-                    <a href="{{ route('bidan.notifikasi.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('bidan.notifikasi.*') ? 'bg-emerald-50 text-emerald-700 font-semibold shadow-sm border border-emerald-100' : 'text-gray-600 hover:bg-gray-50 hover:text-emerald-600 font-medium border border-transparent' }}">
-                        <svg class="w-5 h-5 mr-3 {{ request()->routeIs('bidan.notifikasi.*') ? 'text-emerald-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                        Notifikasi WA
-                    </a>
-                    
-                    <a href="{{ route('bidan.kunjungan.index') }}" class="flex items-center px-4 py-3 rounded-xl transition-all duration-200 {{ request()->routeIs('bidan.kunjungan.*') ? 'bg-emerald-50 text-emerald-700 font-semibold shadow-sm border border-emerald-100' : 'text-gray-600 hover:bg-gray-50 hover:text-emerald-600 font-medium border border-transparent' }}">
-                        <svg class="w-5 h-5 mr-3 {{ request()->routeIs('bidan.kunjungan.*') ? 'text-emerald-500' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                        Kunjungan Rumah
-                        @php $pendingKunjungan = \App\Models\KunjunganRumah::whereIn('status', ['dijadwalkan', 'ditunda'])->count(); @endphp
-                        @if($pendingKunjungan > 0)
-                        <span class="ml-auto text-[10px] font-bold bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center">{{ $pendingKunjungan }}</span>
-                        @endif
-                    </a>
                 </div>
             </div>
 

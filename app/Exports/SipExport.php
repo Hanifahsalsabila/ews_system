@@ -30,17 +30,17 @@ class SipExport implements FromView, ShouldAutoSize, WithStyles
         // For production, these should strictly filter by month/year from pivot tables or creation dates.
         if ($format_id == 1 || $format_id == 4) {
             // Ibu Hamil
-            $data = Warga::whereHas('ibuHamil')->with('ibuHamil')->get();
+            $data = Warga::whereHas('ibuHamil')->with(['ibuHamil', 'region.parent.parent'])->get();
         } elseif ($format_id == 2) {
             // Balita
-            $data = Warga::whereHas('balita')->with('balita', 'pemeriksaans')->get();
+            $data = Warga::whereHas('balita')->with(['balita', 'pemeriksaans', 'region.parent.parent'])->get();
         } elseif ($format_id == 3) {
             // WUS PUS
             $data = Warga::whereDoesntHave('balita')->whereDoesntHave('ibuHamil')->whereHas('pemeriksaans', function($q) use ($bulan, $tahun) {
                 // Approximate filtering
-            })->get();
+            })->with('region.parent.parent')->get();
             if ($data->isEmpty()) {
-                $data = Warga::whereDoesntHave('balita')->whereDoesntHave('ibuHamil')->get();
+                $data = Warga::whereDoesntHave('balita')->whereDoesntHave('ibuHamil')->with('region.parent.parent')->get();
             }
         } elseif ($format_id == 5 || $format_id == 6) {
             // Sesi Posyandu & Operasional

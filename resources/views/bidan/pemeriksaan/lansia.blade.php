@@ -71,7 +71,7 @@
                             <td class="px-6 py-4 text-right">
                                 <button
                                     @click="openModal = true; selectedId = {{ $org->warga->id }}; selectedName = '{{ addslashes($org->warga->nama) }}'; selectedGolDar = '{{ $org->golongan_darah ?? '-' }}'; selectedPenyakit = '{{ addslashes($org->riwayat_penyakit ?? 'Tidak ada') }}'; riwayat = {{ json_encode($org->warga->pemeriksaans->map(fn($p) => ['tanggal' => $p->created_at->format('d/m/Y'), 'bb' => $p->berat_badan, 'tensi' => $p->tensi_darah, 'gula' => $p->gula_darah])) }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ $isDone ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-200' }}"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ ($isDone || !$sesiAktif) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-amber-600 text-white hover:bg-amber-700 shadow-lg shadow-amber-200' }}"
                                     {{ $isDone || !$sesiAktif ? 'disabled' : '' }}>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                     Input

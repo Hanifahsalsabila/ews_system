@@ -65,7 +65,7 @@
                     <td style="border: 1px solid #000;">{{ $row->ibuHamil ? $row->ibuHamil->hpht : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->ibuHamil ? $row->ibuHamil->hpl : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->ibuHamil ? $row->ibuHamil->kehamilan_ke : '-' }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap }}</td>
+                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap ? $row->alamat_lengkap . ', ' : '' }}Dusun {{ $row->region->dusun_name ?? '-' }} {{ $row->region->rt_name ?? '-' }}/{{ $row->region->rw_name ?? '-' }}</td>
                 </tr>
             @elseif($format_id == 2)
                 <tr>
@@ -76,14 +76,14 @@
                     <td style="border: 1px solid #000;">{{ $row->balita ? $row->balita->tanggal_lahir : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->balita ? $row->balita->nama_ayah : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->balita ? $row->balita->nama_ibu : '-' }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap }}</td>
+                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap ? $row->alamat_lengkap . ', ' : '' }}Dusun {{ $row->region->dusun_name ?? '-' }} {{ $row->region->rt_name ?? '-' }}/{{ $row->region->rw_name ?? '-' }}</td>
                 </tr>
             @elseif($format_id == 3)
                 <tr>
                     <td style="border: 1px solid #000;">{{ $index + 1 }}</td>
                     <td style="border: 1px solid #000;">'{{ $row->nik }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nama }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap }}</td>
+                    <td style="border: 1px solid #000;">{{ $row->alamat_lengkap ? $row->alamat_lengkap . ', ' : '' }}Dusun {{ $row->region->dusun_name ?? '-' }} {{ $row->region->rt_name ?? '-' }}/{{ $row->region->rw_name ?? '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nomor_telepon }}</td>
                 </tr>
             @elseif($format_id == 5 || $format_id == 6)

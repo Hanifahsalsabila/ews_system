@@ -52,14 +52,11 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'ibu_hamil')->latest()->take(3);
         }])->get();
 
-        // Get list of warga_ids already examined in this session
-        $sudahDiperiksa = collect();
-        if ($sesiAktif) {
-            $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
-                ->where('tipe_kohort', 'ibu_hamil')
-                ->where('is_validated', true)
-                ->pluck('warga_id');
-        }
+        // Get list of warga_ids already examined today
+        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+            ->where('tipe_kohort', 'ibu_hamil')
+            ->where('is_validated', true)
+            ->pluck('warga_id');
 
         return view('bidan.pemeriksaan.ibu_hamil', compact('ibuHamil', 'sesiAktif', 'sudahDiperiksa'));
     }
@@ -72,13 +69,10 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'balita')->latest()->take(3);
         }])->get();
 
-        $sudahDiperiksa = collect();
-        if ($sesiAktif) {
-            $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
-                ->where('tipe_kohort', 'balita')
-                ->where('is_validated', true)
-                ->pluck('warga_id');
-        }
+        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+            ->where('tipe_kohort', 'balita')
+            ->where('is_validated', true)
+            ->pluck('warga_id');
 
         return view('bidan.pemeriksaan.balita', compact('balita', 'sesiAktif', 'sudahDiperiksa'));
     }
@@ -91,13 +85,10 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'lansia')->latest()->take(3);
         }])->get();
 
-        $sudahDiperiksa = collect();
-        if ($sesiAktif) {
-            $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
-                ->where('tipe_kohort', 'lansia')
-                ->where('is_validated', true)
-                ->pluck('warga_id');
-        }
+        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+            ->where('tipe_kohort', 'lansia')
+            ->where('is_validated', true)
+            ->pluck('warga_id');
 
         return view('bidan.pemeriksaan.lansia', compact('lansia', 'sesiAktif', 'sudahDiperiksa'));
     }
@@ -180,10 +171,10 @@ class PemeriksaanController extends Controller
             $sesi = \App\Models\SesiPosyandu::find($request->sesi_posyandu_id);
 
             if ($warga && $warga->balita && $sesi && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
-                $dob = \Carbon\Carbon::parse($warga->balita->tanggal_lahir);
+                $dob = \Carbon\Carbon::parse($warga->tanggal_lahir);
                 $sessionDate = \Carbon\Carbon::parse($sesi->tanggal);
                 $ageInMonths = (int) $dob->diffInMonths($sessionDate);
-                $gender = $warga->balita->jenis_kelamin;
+                $gender = $warga->jenis_kelamin;
 
                 $zscoreService = new \App\Services\WhoZscoreService();
                 

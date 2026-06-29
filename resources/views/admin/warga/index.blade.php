@@ -20,10 +20,13 @@
         if (warga) {
             this.editMode = true;
             this.formData = { ...warga };
-            if (warga.balita) this.cohortType = 'balita', Object.assign(this.formData, warga.balita);
-            else if (warga.ibu_hamil) this.cohortType = 'ibu_hamil', Object.assign(this.formData, warga.ibu_hamil);
-            else if (warga.lansia) this.cohortType = 'lansia', Object.assign(this.formData, warga.lansia);
-            else this.cohortType = 'umum';
+            if (warga.balita) { this.cohortType = 'balita'; Object.assign(this.formData, warga.balita); }
+            else if (warga.ibu_hamil) { this.cohortType = 'ibu_hamil'; Object.assign(this.formData, warga.ibu_hamil); }
+            else if (warga.lansia) { this.cohortType = 'lansia'; Object.assign(this.formData, warga.lansia); }
+            else { this.cohortType = 'umum'; }
+            
+            // Restore Warga ID in case it was overwritten by cohort's ID
+            this.formData.id = warga.id;
         } else {
             this.editMode = false;
             this.cohortType = 'umum';
@@ -80,7 +83,7 @@
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Warga</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Wilayah</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Kohort</th>
-                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Kontak</th>
+                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Kontak & Alamat</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Terdaftar</th>
                         <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Aksi</th>
                     </tr>
@@ -96,12 +99,21 @@
                                 <div class="overflow-hidden">
                                     <p class="text-sm font-bold text-gray-800 truncate">{{ $warga->nama }}</p>
                                     <p class="text-xs text-gray-400 font-medium">{{ $warga->nik }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        @if($warga->jenis_kelamin)
+                                            {{ $warga->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}
+                                        @endif
+                                        @if($warga->jenis_kelamin && $warga->tanggal_lahir) &bull; @endif
+                                        @if($warga->tanggal_lahir)
+                                            {{ \Carbon\Carbon::parse($warga->tanggal_lahir)->age }} Thn
+                                        @endif
+                                    </p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4">
                             <p class="text-sm text-gray-600">{{ $warga->region->dusun_name ?? '-' }}</p>
-                            <p class="text-xs text-gray-400 italic">RW {{ str_pad($warga->region->rw_name ?? 0, 2, '0', STR_PAD_LEFT) }} / RT {{ str_pad($warga->region->rt_name ?? 0, 2, '0', STR_PAD_LEFT) }}</p>
+                            <p class="text-xs text-gray-400 italic">{{ $warga->region->rw_name ?? '-' }} / {{ $warga->region->rt_name ?? '-' }}</p>
                         </td>
                         <td class="px-6 py-4">
                             @if($warga->balita)
@@ -114,8 +126,9 @@
                                 <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-50 text-gray-400 border border-gray-100 italic">Umum</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $warga->nomor_telepon ?? '-' }}
+                        <td class="px-6 py-4">
+                            <p class="text-sm font-bold text-gray-600">{{ $warga->nomor_telepon ?? '-' }}</p>
+                            <p class="text-xs text-gray-400 truncate max-w-[150px]" title="{{ $warga->alamat_lengkap }}">{{ $warga->alamat_lengkap ?? 'Tanpa alamat lengkap' }}</p>
                         </td>
                         <td class="px-6 py-4">
                             <p class="text-sm font-bold text-gray-800">{{ $warga->created_at->format('d M Y') }}</p>
@@ -205,9 +218,7 @@
 
             <form :action="editMode ? '{{ url('admin/wargas') }}/' + formData.id : '{{ route('admin.wargas.store') }}'" method="POST" class="flex flex-col flex-1 overflow-hidden">
                 @csrf
-                <template x-if="editMode">
-                    <input type="hidden" name="_method" value="PUT">
-                </template>
+                <input type="hidden" name="_method" value="PUT" x-bind:disabled="!editMode">
 
                 <div class="flex-1 overflow-y-auto p-8 bg-slate-50/50">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -236,6 +247,26 @@
                                     <div>
                                         <label class="block text-xs font-bold text-gray-600 mb-1.5">Nama Lengkap</label>
                                         <input type="text" name="nama" x-model="formData.nama" required class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all placeholder-gray-300" placeholder="Nama sesuai KTP">
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 mb-1.5">Jenis Kelamin</label>
+                                            <div class="flex gap-2">
+                                                <label class="flex-1 text-center py-2.5 px-3 bg-slate-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors" :class="formData.jenis_kelamin == 'L' ? 'ring-2 ring-emerald-500 bg-emerald-50 border-emerald-200' : ''">
+                                                    <input type="radio" name="jenis_kelamin" value="L" x-model="formData.jenis_kelamin" class="sr-only">
+                                                    <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'L' ? 'text-emerald-700' : 'text-gray-600'">Laki-laki</span>
+                                                </label>
+                                                <label class="flex-1 text-center py-2.5 px-3 bg-slate-50 border border-gray-200 rounded-xl cursor-pointer hover:bg-emerald-50 transition-colors" :class="formData.jenis_kelamin == 'P' ? 'ring-2 ring-rose-400 bg-rose-50 border-rose-200' : ''">
+                                                    <input type="radio" name="jenis_kelamin" value="P" x-model="formData.jenis_kelamin" class="sr-only">
+                                                    <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'P' ? 'text-rose-700' : 'text-gray-600'">Perempuan</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-600 mb-1.5">Tanggal Lahir</label>
+                                            <input type="date" name="tanggal_lahir" x-model="formData.tanggal_lahir" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-gray-700">
+                                        </div>
                                     </div>
                                     
                                 <div x-data="{ 
@@ -384,25 +415,6 @@
                                         </h5>
                                         <div class="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Jenis Kelamin</label>
-                                                <div class="flex gap-2">
-                                                    <label class="flex-1 text-center py-2.5 px-3 bg-white border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" :class="formData.jenis_kelamin == 'L' ? 'ring-2 ring-blue-500 bg-blue-50' : ''">
-                                                        <input type="radio" name="jenis_kelamin" value="L" x-model="formData.jenis_kelamin" class="sr-only">
-                                                        <span class="text-xs font-bold text-blue-900">Laki-laki</span>
-                                                    </label>
-                                                    <label class="flex-1 text-center py-2.5 px-3 bg-white border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors" :class="formData.jenis_kelamin == 'P' ? 'ring-2 ring-rose-400 bg-rose-50 border-rose-200' : ''">
-                                                        <input type="radio" name="jenis_kelamin" value="P" x-model="formData.jenis_kelamin" class="sr-only">
-                                                        <span class="text-xs font-bold" :class="formData.jenis_kelamin == 'P' ? 'text-rose-700' : 'text-blue-900'">Perempuan</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Tanggal Lahir</label>
-                                                <input type="date" name="tanggal_lahir" x-model="formData.tanggal_lahir" class="w-full bg-white border-blue-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-blue-900">
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
                                                 <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Nama Ayah</label>
                                                 <input type="text" name="nama_ayah" x-model="formData.nama_ayah" placeholder="Contoh: Budi Santoso" class="w-full bg-white border-blue-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                                             </div>
@@ -502,18 +514,31 @@
             </div>
             <form action="{{ route('admin.wargas.import') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-6">
                 @csrf
-                <div class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition-colors group cursor-pointer relative">
-                    <input type="file" name="file" required class="absolute inset-0 opacity-0 cursor-pointer">
-                    <svg class="w-12 h-12 text-slate-300 mx-auto group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p class="mt-4 text-sm font-bold text-slate-600">Klik atau seret file Excel di sini</p>
-                    <p class="text-xs text-slate-400 mt-1">Maksimal file 2MB</p>
+                <div x-data="{ fileName: '' }" class="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition-colors group cursor-pointer relative">
+                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 z-10 opacity-0 cursor-pointer" @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                    
+                    <!-- State: File belum dipilih -->
+                    <div x-show="!fileName">
+                        <svg class="w-12 h-12 text-slate-300 mx-auto group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="mt-4 text-sm font-bold text-slate-600">Klik atau seret file Excel di sini</p>
+                        <p class="text-xs text-slate-400 mt-1">Maksimal file 2MB</p>
+                    </div>
+
+                    <!-- State: File sudah dipilih -->
+                    <div x-show="fileName" x-cloak class="flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <p class="text-sm font-bold text-emerald-700 break-all" x-text="fileName"></p>
+                        <p class="text-xs text-slate-400 mt-1">File siap diimpor. Klik area ini untuk mengganti file.</p>
+                    </div>
                 </div>
                 
                 <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 italic">
                     <p class="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-2">Petunjuk Format Kolom:</p>
                     <p class="text-xs text-blue-700 leading-relaxed mb-3">
                         Pastikan header baris pertama di Excel adalah: <br>
-                        <span class="font-mono bg-white px-1 rounded shadow-sm text-blue-900">nik, nama_warga, alamat_lengkap, nomor_telepon, nama_wilayah</span>
+                        <span class="font-mono bg-white px-1 rounded shadow-sm text-blue-900">nik, nama_warga, alamat_lengkap, nomor_telepon, dusun, rw, rt, kohort, jenis_kelamin, tanggal_lahir</span>
                     </p>
                     <a href="{{ asset('Template_Data_Warga.xlsx') }}" download class="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>

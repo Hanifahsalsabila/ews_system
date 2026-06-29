@@ -116,10 +116,10 @@ class SesiPosyanduController extends Controller
 
             // Enterprise Feature: Smart Analytics (WHO Z-Score)
             if ($warga->balita) {
-                $dob = \Carbon\Carbon::parse($warga->balita->tanggal_lahir);
+                $dob = \Carbon\Carbon::parse($warga->tanggal_lahir);
                 $sessionDate = \Carbon\Carbon::parse($sesi->tanggal);
                 $ageInMonths = (int) $dob->diffInMonths($sessionDate);
-                $gender = $warga->balita->jenis_kelamin;
+                $gender = $warga->jenis_kelamin;
 
                 $zscoreService = new \App\Services\WhoZscoreService();
                 

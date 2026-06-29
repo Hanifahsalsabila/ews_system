@@ -79,7 +79,7 @@
                             <td class="px-6 py-4 text-right">
                                 <button
                                     @click="openModal = true; selectedId = {{ $ibu->warga->id }}; selectedName = '{{ addslashes($ibu->warga->nama) }}'; riwayat = {{ json_encode($ibu->warga->pemeriksaans->map(fn($p) => ['tanggal' => $p->created_at->format('d/m/Y'), 'bb' => $p->berat_badan, 'tensi' => $p->tensi_darah, 'tfu' => $p->tfu])) }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ $isDone ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-200' }}"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ ($isDone || !$sesiAktif) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-rose-600 text-white hover:bg-rose-700 shadow-lg shadow-rose-200' }}"
                                     {{ $isDone || !$sesiAktif ? 'disabled' : '' }}>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                     Input

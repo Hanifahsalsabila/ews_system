@@ -51,7 +51,7 @@
                     <tbody class="divide-y divide-slate-50">
                         @forelse($balita as $anak)
                         @php
-                            $umurBulan = intval(\Carbon\Carbon::parse($anak->tanggal_lahir)->diffInMonths(now()));
+                            $umurBulan = intval(\Carbon\Carbon::parse($anak->warga->tanggal_lahir)->diffInMonths(now()));
                             $isDone = $sudahDiperiksa->contains($anak->warga_id);
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition {{ $isDone ? 'opacity-60' : '' }}">
@@ -65,10 +65,10 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center justify-center px-3 py-1 bg-blue-50 text-blue-600 rounded-lg font-black text-sm border border-blue-100">{{ $umurBulan }} Bln</span>
-                                <p class="text-xs text-slate-400 mt-1">{{ \Carbon\Carbon::parse($anak->tanggal_lahir)->format('d M Y') }}</p>
+                                <p class="text-xs text-slate-400 mt-1">{{ \Carbon\Carbon::parse($anak->warga->tanggal_lahir)->format('d M Y') }}</p>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg font-bold text-sm {{ $anak->jenis_kelamin == 'L' ? 'bg-sky-50 text-sky-600 border border-sky-100' : 'bg-pink-50 text-pink-600 border border-pink-100' }}">{{ $anak->jenis_kelamin }}</span>
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg font-bold text-sm {{ $anak->warga->jenis_kelamin == 'L' ? 'bg-sky-50 text-sky-600 border border-sky-100' : 'bg-pink-50 text-pink-600 border border-pink-100' }}">{{ $anak->warga->jenis_kelamin }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 @if($isDone)
@@ -80,7 +80,7 @@
                             <td class="px-6 py-4 text-right">
                                 <button
                                     @click="openModal = true; selectedId = {{ $anak->warga->id }}; selectedName = '{{ addslashes($anak->warga->nama) }}'; selectedUmur = {{ $umurBulan }}; riwayat = {{ json_encode($anak->warga->pemeriksaans->map(fn($p) => ['tanggal' => $p->created_at->format('d/m/Y'), 'bb' => $p->berat_badan, 'tb' => $p->tinggi_badan, 'lk' => $p->lingkar_kepala])) }}"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ $isDone ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200' }}"
+                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all {{ ($isDone || !$sesiAktif) ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200' }}"
                                     {{ $isDone || !$sesiAktif ? 'disabled' : '' }}>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                                     Input
