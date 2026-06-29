@@ -97,31 +97,43 @@
         </div>
 
         <x-slot name="scripts">
-            <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+            <script src="https://unpkg.com/html5-qrcode@2.3.8" type="text/javascript"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    let html5QrcodeScanner = null;
                     const toggleBtn = document.getElementById('toggle-camera');
                     const btnText = document.getElementById('camera-btn-text');
+                    let scanner = null;
                     let isScanning = false;
+                    let isProcessing = false;
 
                     const sessionId = "{{ $activeSession->id }}";
                     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-                    function onScanSuccess(decodedText, decodedResult) {
-                        // Pause scanning to prevent multiple fast requests
-                        if(html5QrcodeScanner) {
-                            html5QrcodeScanner.pause();
-                        }
+                    function showNotification(message, type) {
+                        const existing = document.getElementById('scan-notification');
+                        if (existing) existing.remove();
 
-                        // Extract the encrypted token from the QR URL.
-                        // QR codes now contain URLs like: http://domain.com/v/ENCRYPTED_TOKEN
-                        let nikOrToken = decodedText;
-                        if (decodedText.includes('/v/')) {
-                            nikOrToken = decodedText.split('/v/')[1];
-                        }
+                        const div = document.createElement('div');
+                        div.id = 'scan-notification';
+                        div.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;padding:16px 24px;border-radius:16px;font-weight:700;font-size:14px;max-width:400px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.15);';
+                        div.style.background = type === 'success' ? '#ecfdf5' : '#fef2f2';
+                        div.style.color = type === 'success' ? '#065f46' : '#991b1b';
+                        div.style.border = type === 'success' ? '2px solid #a7f3d0' : '2px solid #fecaca';
+                        div.textContent = message;
+                        document.body.appendChild(div);
+
+                        setTimeout(() => { if(div) div.remove(); }, 4000);
+                    }
+
+                    function onScanSuccess(decodedText, decodedResult) {
+                        if (isProcessing) return;
+                        isProcessing = true;
+
+                        console.log('✅ QR Scanned:', decodedText);
+                        showNotification('🔄 Memproses QR Code...', 'success');
+
+                        let nikOrToken = decodedText.trim();
                         
-                        // Send to server
                         fetch("{{ route('kader.pendaftaran.scan') }}", {
                             method: "POST",
                             headers: {
@@ -137,51 +149,57 @@
                         .then(response => response.json())
                         .then(data => {
                             if(data.success) {
-                                alert('✅ ' + data.message);
-                                window.location.reload();
+                                showNotification('✅ ' + data.message, 'success');
+                                setTimeout(() => window.location.reload(), 1500);
                             } else {
-                                alert('⚠️ ' + data.message);
-                                if(html5QrcodeScanner) html5QrcodeScanner.resume();
+                                showNotification('⚠️ ' + data.message, 'error');
+                                isProcessing = false;
                             }
                         })
                         .catch(error => {
                             console.error("Error:", error);
-                            alert("Terjadi kesalahan sistem saat memproses QR Code.");
-                            if(html5QrcodeScanner) html5QrcodeScanner.resume();
+                            showNotification("❌ Terjadi kesalahan koneksi.", 'error');
+                            isProcessing = false;
                         });
                     }
 
+                    function onScanError(errorMessage) {
+                        // This fires constantly while scanning but no QR found - ignore it
+                    }
+
                     function startScanner() {
-                        html5QrcodeScanner = new Html5QrcodeScanner(
-                            "reader", 
-                            { fps: 10, qrbox: {width: 250, height: 250}, aspectRatio: 1.0 }
-                        );
-                        html5QrcodeScanner.render(onScanSuccess);
+                        isProcessing = false;
+                        scanner = new Html5QrcodeScanner("reader", {
+                            fps: 20,
+                            qrbox: { width: 300, height: 300 },
+                            rememberLastUsedCamera: true,
+                            showTorchButtonIfSupported: true,
+                            showZoomSliderIfSupported: true,
+                            defaultZoomValueIfSupported: 2,
+                            aspectRatio: 1.0,
+                        });
+                        scanner.render(onScanSuccess, onScanError);
+                        
                         isScanning = true;
                         btnText.innerText = "Matikan Kamera";
-                        toggleBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
-                        toggleBtn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+                        toggleBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-500/20');
+                        toggleBtn.classList.add('bg-rose-600', 'hover:bg-rose-700', 'shadow-rose-500/20');
                     }
 
                     function stopScanner() {
-                        if (html5QrcodeScanner) {
-                            html5QrcodeScanner.clear().then(() => {
+                        if (scanner) {
+                            scanner.clear().then(() => {
                                 isScanning = false;
+                                isProcessing = false;
                                 btnText.innerText = "Aktifkan Kamera Scanner";
-                                toggleBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-                                toggleBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
-                            }).catch(error => {
-                                console.error("Failed to clear scanner. ", error);
-                            });
+                                toggleBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700', 'shadow-rose-500/20');
+                                toggleBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700', 'shadow-emerald-500/20');
+                            }).catch(err => console.error("Stop error:", err));
                         }
                     }
 
                     toggleBtn.addEventListener('click', () => {
-                        if (isScanning) {
-                            stopScanner();
-                        } else {
-                            startScanner();
-                        }
+                        isScanning ? stopScanner() : startScanner();
                     });
                 });
             </script>

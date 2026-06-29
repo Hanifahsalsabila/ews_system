@@ -55,4 +55,9 @@ class Pemeriksaan extends Model implements Auditable
     {
         return $this->belongsTo(User::class, 'petugas_id');
     }
+
+    public function kalkulasiZScore()
+    {
+        return $this->hasOne(KalkulasiZScore::class, 'pemeriksaan_id');
+    }
 }

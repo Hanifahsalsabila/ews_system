@@ -17,6 +17,7 @@ class PengukuranController extends Controller
         $activeSession = SesiPosyandu::whereDate('tanggal', today())->where('status', 'aktif')->first();
         
         $antrean = collect();
+        $sudahDiukur = collect();
         if ($activeSession) {
             // Get all Absensi today where Warga DOES NOT have Pemeriksaan for this session
             $antrean = Absensi::with('warga.balita', 'warga.ibuHamil')
@@ -25,9 +26,15 @@ class PengukuranController extends Controller
                     $q->where('sesi_posyandu_id', $activeSession->id);
                 })
                 ->get();
+
+            // Get pemeriksaan that have been completed in this session
+            $sudahDiukur = Pemeriksaan::with('warga.balita', 'warga.ibuHamil')
+                ->where('sesi_posyandu_id', $activeSession->id)
+                ->latest()
+                ->get();
         }
 
-        return view('kader.pengukuran.index', compact('activeSession', 'antrean'));
+        return view('kader.pengukuran.index', compact('activeSession', 'antrean', 'sudahDiukur'));
     }
 
     public function create(Warga $warga)
@@ -55,9 +62,20 @@ class PengukuranController extends Controller
             'tensi_darah' => 'nullable|string',
         ]);
 
+        // Auto-detect cohort type from warga relationships
+        $tipeKohort = null;
+        if ($warga->balita) {
+            $tipeKohort = 'balita';
+        } elseif ($warga->ibuHamil) {
+            $tipeKohort = 'ibu_hamil';
+        } elseif ($warga->lansia) {
+            $tipeKohort = 'lansia';
+        }
+
         $pemeriksaan = Pemeriksaan::create([
             'warga_id' => $warga->id,
             'sesi_posyandu_id' => $activeSession->id,
+            'tipe_kohort' => $tipeKohort,
             'berat_badan' => $validated['berat_badan'] ?? null,
             'tinggi_badan' => $validated['tinggi_badan'] ?? null,
             'lingkar_kepala' => $validated['lingkar_kepala'] ?? null,

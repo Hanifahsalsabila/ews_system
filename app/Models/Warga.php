@@ -13,6 +13,27 @@ class Warga extends Model implements Auditable
 
     protected $table = 'warga';
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($warga) {
+            // Cascade soft deletes to related records
+            if ($warga->balita) {
+                $warga->balita()->delete();
+            }
+            if ($warga->ibuHamil) {
+                $warga->ibuHamil()->delete();
+            }
+            if ($warga->lansia) {
+                $warga->lansia()->delete();
+            }
+            
+            // Delete related pemeriksaans
+            $warga->pemeriksaans()->delete();
+        });
+    }
+
     protected $fillable = [
         'nik',
         'nama',

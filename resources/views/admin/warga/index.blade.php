@@ -123,19 +123,33 @@
                         </td>
                         <td class="px-6 py-4 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button @click="showQR({{ json_encode($warga) }})" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100">
+                                <!-- Generate Account Button -->
+                                @if(!$warga->user_id)
+                                    <form action="{{ route('admin.wargas.generate-account', $warga) }}" method="POST" onsubmit="return confirm('Buat akun login untuk warga ini?')">
+                                        @csrf
+                                        <button type="submit" title="Buatkan Akun Login" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-100">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button type="button" title="Akun Warga Aktif" class="p-2 text-emerald-500 rounded-lg cursor-default border border-transparent">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                    </button>
+                                @endif
+
+                                <button @click="showQR({{ json_encode($warga) }})" title="Lihat QR Code" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1l-3 3m2-3l3 3m-3-3v12m-9-4h10m-8 0l3-3m-3 3l3 3"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M7 8h10M7 16h10"></path>
                                     <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"></rect>
                                     <path d="M7 7h2v2H7zM7 15h2v2H7zM15 7h2v2h-2z"></path>
                                     </svg>
                                 </button>
-                                <button @click="openModal({{ json_encode($warga->load(['balita', 'ibuHamil', 'lansia'])) }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
+                                <button @click="openModal({{ json_encode($warga->load(['balita', 'ibuHamil', 'lansia'])) }})" title="Edit Data" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
                                 <form action="{{ route('admin.wargas.destroy', $warga) }}" method="POST" onsubmit="return confirm('Hapus data warga dan seluruh riwayat kohortnya?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100">
+                                    <button type="submit" title="Hapus Data" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </form>

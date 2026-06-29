@@ -60,7 +60,7 @@
             @if($format_id == 1 || $format_id == 4)
                 <tr>
                     <td style="border: 1px solid #000;">{{ $index + 1 }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->nik }}</td>
+                    <td style="border: 1px solid #000;">'{{ $row->nik }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nama }}</td>
                     <td style="border: 1px solid #000;">{{ $row->ibuHamil ? $row->ibuHamil->hpht : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->ibuHamil ? $row->ibuHamil->hpl : '-' }}</td>
@@ -70,7 +70,7 @@
             @elseif($format_id == 2)
                 <tr>
                     <td style="border: 1px solid #000;">{{ $index + 1 }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->nik }}</td>
+                    <td style="border: 1px solid #000;">'{{ $row->nik }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nama }}</td>
                     <td style="border: 1px solid #000;">{{ $row->balita ? ($row->balita->jenis_kelamin == 'L' ? 'Laki-Laki' : 'Perempuan') : '-' }}</td>
                     <td style="border: 1px solid #000;">{{ $row->balita ? $row->balita->tanggal_lahir : '-' }}</td>
@@ -81,7 +81,7 @@
             @elseif($format_id == 3)
                 <tr>
                     <td style="border: 1px solid #000;">{{ $index + 1 }}</td>
-                    <td style="border: 1px solid #000;">{{ $row->nik }}</td>
+                    <td style="border: 1px solid #000;">'{{ $row->nik }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nama }}</td>
                     <td style="border: 1px solid #000;">{{ $row->alamat_lengkap }}</td>
                     <td style="border: 1px solid #000;">{{ $row->nomor_telepon }}</td>

@@ -36,15 +36,31 @@ class PendaftaranController extends Controller
 
         $nikInput = $request->nik;
 
-        // If the scanned value is an encrypted token (from the new secure QR Code),
-        // decrypt it to get the actual NIK.
-        if (strlen($nikInput) > 16) {
+        // Try to decode the scanned QR value
+        // Format 1 (New - Short Signed Token): base64(NIK):hmac_signature_prefix
+        // Format 2 (Legacy - Encrypted): Crypt::encryptString output (200+ chars)
+        // Format 3 (Plain NIK): 16-digit NIK string
+        if (str_contains($nikInput, ':')) {
+            // New short signed token format
+            $parts = explode(':', $nikInput, 2);
+            $decodedNik = base64_decode($parts[0]);
+            $providedSig = $parts[1] ?? '';
+            
+            // Verify signature
+            $expectedSig = substr(hash_hmac('sha256', $decodedNik, config('app.key')), 0, 16);
+            if ($providedSig !== $expectedSig) {
+                return response()->json(['success' => false, 'message' => 'QR Code tidak valid atau sudah kadaluarsa.']);
+            }
+            $nikInput = $decodedNik;
+        } elseif (strlen($nikInput) > 16) {
+            // Legacy encrypted token
             try {
                 $nikInput = \Illuminate\Support\Facades\Crypt::decryptString($nikInput);
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'message' => 'QR Code tidak valid atau rusak.']);
             }
         }
+        // else: plain NIK, use as-is
 
         $warga = Warga::where('nik', $nikInput)->first();
         if (!$warga) {

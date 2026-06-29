@@ -52,7 +52,11 @@
             <x-auth-session-status class="mb-4" :status="session('status')" />
             @if ($errors->any())
                 <div class="mb-4 p-4 text-sm text-red-600 border border-red-200 bg-red-50 rounded-lg">
-                    Autentikasi gagal. Silakan periksa kembali email dan kata sandi Anda.
+                    @if(str_contains($errors->first(), 'belum terhubung'))
+                        {{ $errors->first() }}
+                    @else
+                        Autentikasi gagal. Silakan periksa kembali email dan kata sandi Anda.
+                    @endif
                 </div>
             @endif
 

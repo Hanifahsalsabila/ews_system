@@ -43,6 +43,7 @@ Route::middleware(['auth', 'role:Super_Admin|Admin'])->prefix('admin')->name('ad
     
     Route::post('wargas/import', [WargaController::class, 'import'])->name('wargas.import');
     Route::get('wargas/qr/{nik}', [WargaController::class, 'qrCode'])->name('wargas.qr');
+    Route::post('wargas/{warga}/generate-account', [WargaController::class, 'generateAccount'])->name('wargas.generate-account');
     Route::resource('wargas', WargaController::class);
 
     Route::resource('sesi-posyandus', SesiPosyanduController::class);
@@ -72,6 +73,8 @@ Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name(
     
     // Inventaris / Logistik
     Route::get('logistik', [\App\Http\Controllers\Bidan\LogistikController::class, 'index'])->name('logistik.index');
+    Route::post('logistik/vaksin', [\App\Http\Controllers\Bidan\LogistikController::class, 'storeVaksin'])->name('logistik.vaksin.store');
+    Route::post('logistik/inventaris', [\App\Http\Controllers\Bidan\LogistikController::class, 'storeInventaris'])->name('logistik.inventaris.store');
     
     // Pelaporan
     Route::get('pelaporan', [\App\Http\Controllers\Bidan\PelaporanController::class, 'index'])->name('pelaporan.index');
@@ -88,6 +91,10 @@ Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name(
     Route::post('kunjungan/{kunjungan}/claim', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'claim'])->name('kunjungan.claim');
     Route::get('kunjungan/{kunjungan}/edit', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'edit'])->name('kunjungan.edit');
     Route::put('kunjungan/{kunjungan}', [\App\Http\Controllers\Bidan\KunjunganRumahController::class, 'update'])->name('kunjungan.update');
+
+    // Penyuluhan (CRUD)
+    Route::resource('penyuluhan', \App\Http\Controllers\Bidan\PenyuluhanController::class)->except(['show']);
+    Route::patch('penyuluhan/{penyuluhan}/toggle-publish', [\App\Http\Controllers\Bidan\PenyuluhanController::class, 'togglePublish'])->name('penyuluhan.toggle-publish');
 });
 
 Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader.')->group(function () {
@@ -100,8 +107,9 @@ Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader
     Route::post('pendaftaran/scan', [\App\Http\Controllers\Kader\PendaftaranController::class, 'scan'])->name('pendaftaran.scan');
     Route::post('pendaftaran/store', [\App\Http\Controllers\Kader\PendaftaranController::class, 'store'])->name('pendaftaran.store');
     
-    // Buku Register Warga (Read-Only)
-    Route::resource('warga', \App\Http\Controllers\Kader\WargaController::class)->only(['index']);
+    // Buku Register Warga
+    Route::post('warga/{warga}/generate-account', [\App\Http\Controllers\Kader\WargaController::class, 'generateAccount'])->name('warga.generate-account');
+    Route::resource('warga', \App\Http\Controllers\Kader\WargaController::class);
     
     // Meja 2 & 3: Pengukuran & Penimbangan
     Route::get('pengukuran', [\App\Http\Controllers\Kader\PengukuranController::class, 'index'])->name('pengukuran.index');
@@ -110,13 +118,28 @@ Route::middleware(['auth', 'role:Kader_Posyandu'])->prefix('kader')->name('kader
     
     // Profile
     Route::get('profile', [\App\Http\Controllers\Kader\ProfileController::class, 'edit'])->name('profile.edit');
+
+    // Penyuluhan (Read-Only)
+    Route::get('penyuluhan', [\App\Http\Controllers\Kader\PenyuluhanController::class, 'index'])->name('penyuluhan.index');
+    Route::get('penyuluhan/{penyuluhan}', [\App\Http\Controllers\Kader\PenyuluhanController::class, 'show'])->name('penyuluhan.show');
 });
 
 // ── Portal Warga / Orang Tua ──
-Route::middleware(['auth', 'role:orang_tua'])->prefix('warga')->name('warga.')->group(function () {
+Route::middleware([
+    'auth', 
+    'role:orang_tua',
+    'check_warga_data'
+])->prefix('portal')->name('warga.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Warga\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/riwayat', [\App\Http\Controllers\Warga\RiwayatController::class, 'index'])->name('riwayat');
     Route::get('/badges', [\App\Http\Controllers\Warga\BadgeController::class, 'index'])->name('badges');
+    Route::get('/kms/{warga}', [\App\Http\Controllers\Warga\DashboardController::class, 'kms'])->name('kms');
+    Route::get('/profile', [\App\Http\Controllers\Warga\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/password', [\App\Http\Controllers\Warga\ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // Penyuluhan / Edukasi (Read-Only)
+    Route::get('/edukasi', [\App\Http\Controllers\Warga\PenyuluhanController::class, 'index'])->name('edukasi.index');
+    Route::get('/edukasi/{penyuluhan}', [\App\Http\Controllers\Warga\PenyuluhanController::class, 'show'])->name('edukasi.show');
 });
 
 require __DIR__.'/auth.php';

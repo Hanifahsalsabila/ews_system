@@ -144,10 +144,76 @@
             <!-- Right -->
             <div class="flex items-center gap-6">
                 <!-- Notifications -->
-                <button class="relative w-11 h-11 flex items-center justify-center text-gray-400 hover:text-emerald-600 transition-all rounded-xl hover:bg-emerald-50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
-                </button>
+                @php
+                    $inventarisIssues = \App\Models\Inventaris::whereIn('kondisi', ['rusak', 'hilang'])->get();
+                    $wargaBaru = \App\Models\Warga::where('created_at', '>=', now()->subDays(7))->latest()->take(5)->get();
+                    $totalNotif = $inventarisIssues->count() + $wargaBaru->count();
+                @endphp
+                <div class="relative" x-data="{ openNotif: false }" @click.away="openNotif = false">
+                    <button @click="openNotif = !openNotif" class="relative w-11 h-11 flex items-center justify-center text-gray-400 hover:text-emerald-600 transition-all rounded-xl hover:bg-emerald-50 focus:outline-none">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        @if($totalNotif > 0)
+                            <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full flex items-center justify-center">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            </span>
+                        @endif
+                    </button>
+
+                    <!-- Notification Dropdown -->
+                    <div x-show="openNotif" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 translate-y-4"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         style="display: none;"
+                         class="absolute right-0 mt-4 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 origin-top-right overflow-hidden flex flex-col max-h-[80vh]">
+                        
+                        <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between shrink-0">
+                            <p class="text-sm font-black text-slate-800">Notifikasi</p>
+                            @if($totalNotif > 0)
+                                <span class="bg-rose-100 text-rose-600 py-0.5 px-2 rounded-lg text-[10px] font-black">{{ $totalNotif }} Baru</span>
+                            @endif
+                        </div>
+
+                        <div class="overflow-y-auto overflow-x-hidden flex-1 p-2 space-y-1">
+                            @if($totalNotif === 0)
+                                <div class="px-4 py-8 text-center">
+                                    <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                    </div>
+                                    <p class="text-xs text-gray-400 font-bold">Tidak ada notifikasi baru</p>
+                                </div>
+                            @else
+                                <!-- Inventaris Warnings -->
+                                @foreach($inventarisIssues as $inv)
+                                    <a href="{{ route('admin.inventaris.index') }}" class="flex items-start gap-3 p-3 hover:bg-rose-50/50 rounded-2xl transition-colors group">
+                                        <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] font-black text-rose-500 uppercase tracking-wider mb-0.5">Peringatan Inventaris</p>
+                                            <p class="text-xs font-bold text-slate-700 truncate group-hover:text-rose-700 transition-colors">{{ $inv->nama_alat }} ({{ $inv->kode_alat }})</p>
+                                            <p class="text-[11px] text-slate-500 mt-0.5">Kondisi saat ini: <span class="font-bold {{ $inv->kondisi == 'hilang' ? 'text-red-500' : 'text-orange-500' }}">{{ ucfirst($inv->kondisi) }}</span></p>
+                                        </div>
+                                    </a>
+                                @endforeach
+
+                                <!-- New Warga -->
+                                @foreach($wargaBaru as $warga)
+                                    <a href="{{ route('admin.wargas.index') }}" class="flex items-start gap-3 p-3 hover:bg-emerald-50/50 rounded-2xl transition-colors group">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[10px] font-black text-emerald-500 uppercase tracking-wider mb-0.5">Warga Baru (7 Hari Terakhir)</p>
+                                            <p class="text-xs font-bold text-slate-700 truncate group-hover:text-emerald-700 transition-colors">{{ $warga->nama }}</p>
+                                            <p class="text-[11px] text-slate-500 mt-0.5">Terdaftar pada {{ $warga->created_at->format('d M Y') }}</p>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            @endif
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Profile Dropdown -->
                 <div class="relative" x-data="{ open: false }" @click.away="open = false">

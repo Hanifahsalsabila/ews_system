@@ -28,7 +28,9 @@ class PemeriksaanController extends Controller
         $sudahDiperiksaLansia = 0;
 
         if ($sesiAktif) {
-            $periksaHariIni = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)->pluck('warga_id');
+            $periksaHariIni = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
+                ->where('is_validated', true)
+                ->pluck('warga_id');
 
             $sudahDiperiksaBalita = Balita::whereIn('warga_id', $periksaHariIni)->count();
             $sudahDiperiksaIbuHamil = IbuHamil::whereIn('warga_id', $periksaHariIni)->count();
@@ -55,6 +57,7 @@ class PemeriksaanController extends Controller
         if ($sesiAktif) {
             $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
                 ->where('tipe_kohort', 'ibu_hamil')
+                ->where('is_validated', true)
                 ->pluck('warga_id');
         }
 
@@ -73,6 +76,7 @@ class PemeriksaanController extends Controller
         if ($sesiAktif) {
             $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
                 ->where('tipe_kohort', 'balita')
+                ->where('is_validated', true)
                 ->pluck('warga_id');
         }
 
@@ -91,6 +95,7 @@ class PemeriksaanController extends Controller
         if ($sesiAktif) {
             $sudahDiperiksa = Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
                 ->where('tipe_kohort', 'lansia')
+                ->where('is_validated', true)
                 ->pluck('warga_id');
         }
 
@@ -105,14 +110,14 @@ class PemeriksaanController extends Controller
             'tipe_kohort' => 'required|in:balita,ibu_hamil,lansia',
         ]);
 
-        // Prevent duplicate examination in the same session for the same cohort type
-        $exists = Pemeriksaan::where('warga_id', $request->warga_id)
+        // Check if there's an existing record
+        $pemeriksaan = Pemeriksaan::where('warga_id', $request->warga_id)
             ->where('sesi_posyandu_id', $request->sesi_posyandu_id)
             ->where('tipe_kohort', $request->tipe_kohort)
-            ->exists();
+            ->first();
 
-        if ($exists) {
-            return redirect()->back()->with('error', 'Warga ini sudah diperiksa pada sesi ini.');
+        if ($pemeriksaan && $pemeriksaan->is_validated) {
+            return redirect()->back()->with('error', 'Warga ini sudah divalidasi pada sesi ini.');
         }
 
         $tindakan = $request->tindakan;
@@ -131,20 +136,17 @@ class PemeriksaanController extends Controller
             }
         }
 
-        Pemeriksaan::create([
-            'warga_id' => $request->warga_id,
-            'sesi_posyandu_id' => $request->sesi_posyandu_id,
-            'tipe_kohort' => $request->tipe_kohort,
-            'berat_badan' => $request->berat_badan,
-            'tinggi_badan' => $request->tinggi_badan,
-            'lingkar_kepala' => $request->lingkar_kepala,
-            'lingkar_lengan' => $request->lingkar_lengan,
-            'tfu' => $request->tfu,
-            'djj' => $request->djj,
-            'tensi_darah' => $request->tensi_darah,
-            'keluhan' => $request->keluhan,
-            'tindakan' => $tindakan,
-            'catatan' => $request->catatan,
+        $data = [
+            'berat_badan' => $request->berat_badan ?? ($pemeriksaan->berat_badan ?? null),
+            'tinggi_badan' => $request->tinggi_badan ?? ($pemeriksaan->tinggi_badan ?? null),
+            'lingkar_kepala' => $request->lingkar_kepala ?? ($pemeriksaan->lingkar_kepala ?? null),
+            'lingkar_lengan' => $request->lingkar_lengan ?? ($pemeriksaan->lingkar_lengan ?? null),
+            'tfu' => $request->tfu ?? ($pemeriksaan->tfu ?? null),
+            'djj' => $request->djj ?? ($pemeriksaan->djj ?? null),
+            'tensi_darah' => $request->tensi_darah ?? ($pemeriksaan->tensi_darah ?? null),
+            'keluhan' => $request->keluhan ?? ($pemeriksaan->keluhan ?? null),
+            'tindakan' => $tindakan ?? ($pemeriksaan->tindakan ?? null),
+            'catatan' => $request->catatan ?? ($pemeriksaan->catatan ?? null),
             // Balita fields
             'vitamin_a' => $request->boolean('vitamin_a'),
             'obat_cacing' => $request->boolean('obat_cacing'),
@@ -161,7 +163,44 @@ class PemeriksaanController extends Controller
             // Validation
             'is_validated' => true,
             'petugas_id' => auth()->id()
-        ]);
+        ];
+
+        if ($pemeriksaan) {
+            $pemeriksaan->update($data);
+        } else {
+            $data['warga_id'] = $request->warga_id;
+            $data['sesi_posyandu_id'] = $request->sesi_posyandu_id;
+            $data['tipe_kohort'] = $request->tipe_kohort;
+            $pemeriksaan = Pemeriksaan::create($data);
+        }
+
+        // Calculate and save Z-Score for Balita
+        if ($request->tipe_kohort === 'balita') {
+            $warga = \App\Models\Warga::with(['balita'])->find($request->warga_id);
+            $sesi = \App\Models\SesiPosyandu::find($request->sesi_posyandu_id);
+
+            if ($warga && $warga->balita && $sesi && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
+                $dob = \Carbon\Carbon::parse($warga->balita->tanggal_lahir);
+                $sessionDate = \Carbon\Carbon::parse($sesi->tanggal);
+                $ageInMonths = (int) $dob->diffInMonths($sessionDate);
+                $gender = $warga->balita->jenis_kelamin;
+
+                $zscoreService = new \App\Services\WhoZscoreService();
+                
+                $zBbu = $zscoreService->calculate('BBU', $pemeriksaan->berat_badan, $ageInMonths, $gender);
+                $zTbu = $zscoreService->calculate('TBU', $pemeriksaan->tinggi_badan, $ageInMonths, $gender);
+                
+                \App\Models\KalkulasiZScore::updateOrCreate(
+                    ['pemeriksaan_id' => $pemeriksaan->id],
+                    [
+                        'zscore_bb_u' => $zBbu,
+                        'zscore_tb_u' => $zTbu,
+                        'status_gizi' => $zscoreService->getStatusBBU($zBbu),
+                        'status_stunting' => $zscoreService->getStatusTBU($zTbu),
+                    ]
+                );
+            }
+        }
 
         return redirect()->back()->with('success', 'Data pemeriksaan berhasil disimpan!');
     }

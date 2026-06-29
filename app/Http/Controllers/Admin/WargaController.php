@@ -53,8 +53,9 @@ class WargaController extends Controller
             'cohort_type' => 'required|in:balita,ibu_hamil,lansia,umum',
             
             // Balita specific
-            'jenis_kelamin' => 'required_if:cohort_type,balita|in:L,P',
-            'tanggal_lahir' => 'required_if:cohort_type,balita|date',
+            // Balita specific
+            'jenis_kelamin' => 'nullable|required_if:cohort_type,balita|in:L,P',
+            'tanggal_lahir' => 'nullable|required_if:cohort_type,balita|date',
             'nama_ayah' => 'nullable|string|max:255',
             'nama_ibu' => 'nullable|string|max:255',
             
@@ -225,6 +226,52 @@ class WargaController extends Controller
             return view('warga.verify', compact('warga'));
         } catch (\Exception $e) {
             abort(404, 'Kode QR tidak valid atau telah kadaluarsa.');
+        }
+    }
+    public function generateAccount(Warga $warga)
+    {
+        if ($warga->user_id) {
+            return redirect()->back()->withErrors(['error' => 'Warga ini sudah memiliki akun.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $email = $warga->nik . '@eposyandu.local';
+            
+            // Cek apakah user dengan email atau NIK ini sudah ada
+            $user = \App\Models\User::where('email', $email)
+                                    ->orWhere('nik', $warga->nik)
+                                    ->orWhere('username', $warga->nik)
+                                    ->first();
+
+            if (!$user) {
+                // Jika belum ada, buat baru
+                $user = \App\Models\User::create([
+                    'name' => $warga->nama,
+                    'email' => $email,
+                    'username' => $warga->nik,
+                    'nik' => $warga->nik,
+                    'password' => \Illuminate\Support\Facades\Hash::make('posyandu123'),
+                    'is_active' => true,
+                ]);
+                $user->assignRole('orang_tua');
+                $message = 'Akun berhasil dibuat. NIK: ' . $warga->nik . ' / Password: posyandu123';
+            } else {
+                // Pastikan role orang_tua ada pada user lama
+                if (!$user->hasRole('orang_tua')) {
+                    $user->assignRole('orang_tua');
+                }
+                $message = 'Akun sudah ada di sistem dan berhasil dihubungkan ke data Warga.';
+            }
+
+            // Hubungkan warga ke user
+            $warga->update(['user_id' => $user->id]);
+
+            DB::commit();
+            return redirect()->back()->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Gagal membuat akun: ' . $e->getMessage()]);
         }
     }
 }

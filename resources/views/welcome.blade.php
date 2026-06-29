@@ -55,10 +55,7 @@
                 @auth
                     <a href="{{ url('/dashboard') }}" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all">Dashboard →</a>
                 @else
-                    <a href="{{ route('login') }}" class="px-5 py-2.5 text-sm font-bold text-slate-700 hover:text-emerald-600 transition-colors">Masuk</a>
-                    @if(Route::has('register'))
-                    <a href="{{ route('register') }}" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all">Daftar</a>
-                    @endif
+                    <a href="{{ route('login') }}" class="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 transition-all">Masuk</a>
                 @endauth
             </div>
             <button @click="mobileMenu = !mobileMenu" class="md:hidden w-10 h-10 rounded-xl bg-white/80 border border-slate-100 flex items-center justify-center">

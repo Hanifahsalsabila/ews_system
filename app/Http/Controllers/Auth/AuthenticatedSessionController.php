@@ -26,9 +26,26 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = Auth::user();
+
+        // Cek jika user orang tua tapi belum punya data warga
+        if ($user->hasRole('orang_tua')) {
+            $hasWarga = \App\Models\Warga::where('user_id', $user->id)->exists();
+            
+            if (!$hasWarga) {
+                Auth::guard('web')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Akun Anda belum terhubung dengan data warga. Silakan hubungi Kader Posyandu.',
+                ]);
+            }
+        }
+
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('dashboard');
     }
 
     /**
