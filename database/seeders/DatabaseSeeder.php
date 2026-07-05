@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
                 'password' => bcrypt('password'),
             ]
         );
-        $bidan->assignRole('Bidan_Desa');
+        $bidan->assignRole('Puskesmas');
 
         $kader = User::firstOrCreate(
             ['email' => 'kader@eposyandu.id'],

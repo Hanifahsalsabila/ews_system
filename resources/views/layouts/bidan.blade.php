@@ -47,7 +47,7 @@
                     </div>
                     <div>
                         <h1 class="text-lg font-bold text-gray-900 tracking-tight leading-none">E-Posyandu</h1>
-                        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Bidan Desa</p>
+                        <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Puskesmas</p>
                     </div>
                 </div>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-gray-600">
@@ -117,7 +117,7 @@
                         <img src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Bidan') }}&background=10b981&color=fff&bold=true" alt="Avatar" class="w-10 h-10 rounded-xl shadow-sm shrink-0">
                         <div class="text-left truncate">
                             <p class="text-sm font-bold text-gray-900 truncate">{{ auth()->user()->name }}</p>
-                            <p class="text-[10px] font-semibold text-emerald-600 truncate">Bidan Desa</p>
+                            <p class="text-[10px] font-semibold text-emerald-600 truncate">Puskesmas</p>
                         </div>
                     </div>
                     <svg class="w-5 h-5 text-gray-400 shrink-0 transition-transform" :class="{'rotate-180': userMenu}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
@@ -184,7 +184,7 @@
                             </div>
                             <div class="text-sm text-left">
                                 <p class="font-bold text-slate-700 leading-none">{{ auth()->user()->name }}</p>
-                                <p class="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">Bidan Desa</p>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 mt-0.5">Puskesmas</p>
                             </div>
                             <svg class="w-4 h-4 text-slate-400 ml-1 transition-transform" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>

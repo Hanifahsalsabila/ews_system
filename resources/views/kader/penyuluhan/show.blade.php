@@ -32,7 +32,7 @@
                 <img src="https://ui-avatars.com/api/?name={{ urlencode($penyuluhan->penulis->name ?? 'Bidan') }}&background=10b981&color=fff&bold=true&size=60" class="w-10 h-10 rounded-xl shadow-sm" alt="">
                 <div>
                     <p class="text-sm font-bold text-gray-800">{{ $penyuluhan->penulis->name ?? 'Bidan' }}</p>
-                    <p class="text-xs text-emerald-600 font-medium">Bidan Desa</p>
+                    <p class="text-xs text-emerald-600 font-medium">Puskesmas</p>
                 </div>
             </div>
 

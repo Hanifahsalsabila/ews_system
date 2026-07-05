@@ -31,7 +31,7 @@ Route::middleware('guest')->prefix('admin')->name('admin.')->group(function () {
     Route::post('login', [AdminLoginController::class, 'store'])->name('login.store');
 });
 
-Route::middleware(['auth', 'role:Super_Admin|Admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:Super_Admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     
     // Admin Profile
@@ -59,7 +59,7 @@ Route::middleware(['auth', 'role:Super_Admin|Admin'])->prefix('admin')->name('ad
     Route::post('pelaporan/export', [\App\Http\Controllers\Admin\PelaporanController::class, 'export'])->name('pelaporan.export');
 });
 
-Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name('bidan.')->group(function () {
+Route::middleware(['auth', 'role:Puskesmas'])->prefix('bidan')->name('bidan.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Bidan\DashboardController::class, 'index'])->name('dashboard');
     
     // Antenatal Care & Pemeriksaan
@@ -80,8 +80,6 @@ Route::middleware(['auth', 'role:Bidan_Desa|Puskesmas'])->prefix('bidan')->name(
     Route::get('pelaporan', [\App\Http\Controllers\Bidan\PelaporanController::class, 'index'])->name('pelaporan.index');
     Route::post('pelaporan/export', [\App\Http\Controllers\Bidan\PelaporanController::class, 'export'])->name('pelaporan.export');
     
-    // Notifikasi WhatsApp
-    Route::get('notifikasi', [\App\Http\Controllers\Bidan\NotifikasiController::class, 'index'])->name('notifikasi.index');
     
     // Profile
     Route::get('profile', [\App\Http\Controllers\Bidan\ProfileController::class, 'edit'])->name('profile.edit');

@@ -88,6 +88,32 @@ class PengukuranController extends Controller
         // ── Early Warning System (EWS): Deteksi Penurunan Berat Badan 2T ──
         $this->checkEarlyWarning($warga, $pemeriksaan);
 
+        // Calculate and save Z-Score for Balita
+        if ($tipeKohort === 'balita') {
+            $wargaWithBalita = \App\Models\Warga::with(['balita'])->find($warga->id);
+            if ($wargaWithBalita && $wargaWithBalita->balita && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
+                $dob = \Carbon\Carbon::parse($wargaWithBalita->tanggal_lahir);
+                $sessionDate = \Carbon\Carbon::parse($activeSession->tanggal);
+                $ageInMonths = (int) $dob->diffInMonths($sessionDate);
+                $gender = $wargaWithBalita->jenis_kelamin;
+
+                $zscoreService = new \App\Services\WhoZscoreService();
+                
+                $zBbu = $zscoreService->calculate('BBU', $pemeriksaan->berat_badan, $ageInMonths, $gender);
+                $zTbu = $zscoreService->calculate('TBU', $pemeriksaan->tinggi_badan, $ageInMonths, $gender);
+                
+                \App\Models\KalkulasiZScore::updateOrCreate(
+                    ['pemeriksaan_id' => $pemeriksaan->id],
+                    [
+                        'zscore_bb_u' => $zBbu,
+                        'zscore_tb_u' => $zTbu,
+                        'status_gizi' => $zscoreService->getStatusBBU($zBbu),
+                        'status_stunting' => $zscoreService->getStatusTBU($zTbu),
+                    ]
+                );
+            }
+        }
+
         return redirect()->route('kader.pengukuran.index')->with('success', 'Data pengukuran awal ' . $warga->nama . ' berhasil disimpan dan masuk ke antrean Bidan.');
     }
 

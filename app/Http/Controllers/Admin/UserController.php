@@ -15,7 +15,7 @@ class UserController extends Controller
     {
         $query = User::with('roles')
             ->whereHas('roles', function ($q) {
-                $q->whereIn('name', ['Super_Admin', 'Admin', 'Bidan_Desa', 'Kader_Posyandu']);
+                $q->whereIn('name', ['Super_Admin', 'Puskesmas', 'Kader_Posyandu']);
             });
 
         // Search functionality
@@ -41,7 +41,7 @@ class UserController extends Controller
         }
 
         $users = $query->latest()->paginate(10)->withQueryString();
-        $roles = Role::whereIn('name', ['Super_Admin', 'Admin', 'Bidan_Desa', 'Kader_Posyandu'])->get();
+        $roles = Role::whereIn('name', ['Super_Admin', 'Puskesmas', 'Kader_Posyandu'])->get();
         return view('admin.users.index', compact('users', 'roles'));
     }
 

@@ -117,7 +117,7 @@
                             @foreach($user->roles as $role)
                                 @if($role->name === 'Admin' || $role->name === 'Super_Admin')
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-600 border border-purple-100">{{ $role->name }}</span>
-                                @elseif($role->name === 'Bidan_Desa')
+                                @elseif($role->name === 'Puskesmas')
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-50 text-pink-600 border border-pink-100">{{ $role->name }}</span>
                                 @else
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">{{ $role->name }}</span>

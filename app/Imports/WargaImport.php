@@ -29,18 +29,35 @@ class WargaImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
-                $dusunName = $row['dusun'] ?? '';
-                $rwName = $row['rw'] ?? '';
-                $rtName = $row['rt'] ?? '';
+                $dusunName = trim(preg_replace('/\s+/', ' ', $row['dusun'] ?? ''));
+                $rwName = trim(preg_replace('/\s+/', ' ', $row['rw'] ?? ''));
+                $rtName = trim(preg_replace('/\s+/', ' ', $row['rt'] ?? ''));
 
-                $dusun = Region::where('type', 'dusun')->where('name', $dusunName)->first();
-                if (!$dusun) throw new \Exception("Dusun dengan nama '{$dusunName}' tidak ditemukan. (Baris NIK: {$row['nik']})");
+                $dusun = Region::where('type', 'dusun')
+                    ->where(DB::raw('TRIM(LOWER(name))'), strtolower($dusunName))
+                    ->first();
+                if (!$dusun) {
+                    $available = Region::where('type', 'dusun')->pluck('name')->implode(', ');
+                    throw new \Exception("Dusun '{$dusunName}' tidak ditemukan. Yang tersedia: {$available}. (NIK: {$row['nik']})");
+                }
 
-                $rw = Region::where('type', 'rw')->where('parent_id', $dusun->id)->where('name', $rwName)->first();
-                if (!$rw) throw new \Exception("RW '{$rwName}' tidak ditemukan di Dusun '{$dusunName}'. (Baris NIK: {$row['nik']})");
+                $rw = Region::where('type', 'rw')
+                    ->where('parent_id', $dusun->id)
+                    ->where(DB::raw('TRIM(LOWER(name))'), strtolower($rwName))
+                    ->first();
+                if (!$rw) {
+                    $available = Region::where('type', 'rw')->where('parent_id', $dusun->id)->pluck('name')->implode(', ');
+                    throw new \Exception("RW '{$rwName}' tidak ditemukan di Dusun '{$dusunName}'. Yang tersedia: {$available}. (NIK: {$row['nik']})");
+                }
 
-                $rt = Region::where('type', 'rt')->where('parent_id', $rw->id)->where('name', $rtName)->first();
-                if (!$rt) throw new \Exception("RT '{$rtName}' tidak ditemukan di RW '{$rwName}'. (Baris NIK: {$row['nik']})");
+                $rt = Region::where('type', 'rt')
+                    ->where('parent_id', $rw->id)
+                    ->where(DB::raw('TRIM(LOWER(name))'), strtolower($rtName))
+                    ->first();
+                if (!$rt) {
+                    $available = Region::where('type', 'rt')->where('parent_id', $rw->id)->pluck('name')->implode(', ');
+                    throw new \Exception("RT '{$rtName}' tidak ditemukan di RW '{$rwName}'. Yang tersedia: {$available}. (NIK: {$row['nik']})");
+                }
 
                 $jk = strtoupper(trim($row['jenis_kelamin'] ?? ''));
                 if (!in_array($jk, ['L', 'P'])) $jk = null; 
