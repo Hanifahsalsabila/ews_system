@@ -1,58 +1,257 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# E-Posyandu
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Test](https://github.com/Hanifahsalsabila/uas-posyandu/actions/workflows/test.yml/badge.svg)](https://github.com/Hanifahsalsabila/uas-posyandu/actions/workflows/test.yml)
+![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?logo=php)
+![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20?logo=laravel)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## About Laravel
+**Sistem Informasi Posyandu Terpadu** — Platform digital untuk manajemen posyandu, pemantauan tumbuh kembang balita, ibu hamil, dan lansia berbasis web.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 👨‍💼 Super Admin
+| Modul | Fitur |
+|-------|-------|
+| **Dashboard** | Overview data warga, grafik kunjungan, audit trail |
+| **Manajemen User** | CRUD petugas, toggle status, filter role |
+| **Data Warga** | CRUD + import Excel + QR Code + Generate Akun |
+| **Wilayah** | Hierarki Dusun/RW/RT |
+| **Sesi Posyandu** | Jadwal + mode Operasional realtime |
+| **Master Vaksin** | CRUD stok, batch, kadaluarsa |
+| **Inventaris Alat** | CRUD kondisi alat kesehatan |
+| **Pelaporan** | Export Excel (SIP, Warga, Balita, Ibu Hamil, Lansia, Kunjungan) |
+| **Audit Trail** | Riwayat perubahan data |
 
-## Learning Laravel
+### 🩺 Puskesmas / Bidan
+| Modul | Fitur |
+|-------|-------|
+| **Dashboard** | Tren pemeriksaan, sebaran stunting, grafik kohort |
+| **Pemeriksaan** | Validasi data balita/ibu hamil/lansia, input klinis |
+| **KMS & Stunting** | Grafik KMS, deteksi Z-Score WHO, status gizi |
+| **Kunjungan Rumah** | EWS otomatis (2T), claim & tindak lanjut |
+| **Penyuluhan** | CRUD + publish artikel edukasi |
+| **Logistik** | Stok vaksin & inventaris |
+| **Pelaporan** | Export coverage & data kohort |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 👥 Kader Posyandu
+| Modul | Fitur |
+|-------|-------|
+| **Dashboard** | Sesi aktif hari ini, statistik antrean |
+| **Meja 1** | Scan QR / input NIK, absensi warga |
+| **Meja 2 & 3** | Input pengukuran (BB, TB, LK, LL) + EWS |
+| **Buku Register** | Data warga + generate akun portal |
+| **Penyuluhan** | Lihat artikel edukasi yang dipublikasi |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 👶 Warga / Orang Tua
+| Modul | Fitur |
+|-------|-------|
+| **Dashboard** | Data anak, riwayat imunisasi, jadwal |
+| **KMS Digital** | Grafik tumbuh kembang, Z-Score |
+| **Riwayat** | Riwayat pemeriksaan & kunjungan |
+| **Badges** | Lencana keaktifan (3/6/12 bulan) |
+| **Edukasi** | Artikel penyuluhan interaktif |
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
+
+## Tech Stack
+
+| Layer | Teknologi |
+|-------|-----------|
+| **Backend** | PHP 8.3, Laravel 13, Spatie Permission, Laravel Auditing |
+| **Frontend** | Blade, Tailwind CSS 3, Alpine.js, Chart.js |
+| **Database** | MySQL 8 (production), SQLite (testing) |
+| **Build** | Vite 8, PostCSS, Autoprefixer |
+| **Export** | Laravel Excel (Maatwebsite) |
+| **QR Code** | simple-qrcode + Crypt |
+| **Testing** | PHPUnit 12 |
+| **CI/CD** | GitHub Actions |
+
+---
+
+## Arsitektur
+
+```
+app/
+├── Http/Controllers/
+│   ├── Admin/       → Panel Super Admin
+│   ├── Auth/        → Authentikasi (Breeze)
+│   ├── Bidan/       → Fitur Puskesmas/Bidan
+│   ├── Kader/       → Fitur Kader Posyandu
+│   └── Warga/       → Portal Orang Tua
+├── Models/          → Eloquent ORM (15 model)
+├── Services/        → Z-Score WHO 2006
+├── Exports/         → 6 format Excel
+└── Imports/         → Import data warga
+
+resources/views/
+├── admin/           → 10 modul Super Admin
+├── bidan/           → 10 modul Puskesmas
+├── kader/           → 7 modul Kader
+├── warga/           → 6 modul Portal Warga
+└── layouts/         → 6 layout per role
+```
+
+### Role-Based Routing
+
+```
+/                   → Public (welcome page)
+/auth/*             → Login, Register, Reset Password
+/admin/*            → Super Admin
+/bidan/*            → Puskesmas/Bidan
+/kader/*            → Kader Posyandu
+/portal/*           → Warga/Orang Tua
+/v/{token}          → Verifikasi QR Publik
+```
+
+### Database Schema
+
+```
+users (1) ── (0..1) warga ── (0..1) balita
+                          ├── (0..1) ibu_hamil
+                          ├── (0..1) lansia
+                          ├── (0..*) pemeriksaan ── (0..1) kalkulasi_zscore
+                          ├── (0..*) absensi
+                          └── (0..*) kunjungan_rumah
+
+regions ── self-referencing (dusun/rw/rt) ── warga
+sesi_posyandu ── absensi, pemeriksaan
+users ── penyuluhan (penulis)
+```
+
+### Flow Operasional Posyandu
+
+```
+Kader Buka Sesi → Warga Scan QR → Absensi
+    ↓
+Kader Ukur BB/TB/LK → Pemeriksaan Awal
+    ↓
+EWS Deteksi 2T? → Auto-create Kunjungan Rumah
+    ↓
+Bidan Validasi → Klinis + Z-Score → Selesai
+```
+
+---
+
+## Screenshots
+
+> *(Tambahkan screenshot di sini)*
+
+| Role | Preview |
+|------|---------|
+| Super Admin Dashboard | `screenshots/admin-dashboard.png` |
+| Bidan Pemeriksaan | `screenshots/bidan-pemeriksaan.png` |
+| Kader Pengukuran | `screenshots/kader-pengukuran.png` |
+| Portal Warga | `screenshots/warga-dashboard.png` |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- PHP 8.3+
+- Composer 2.x
+- Node.js 20+
+- MySQL 8+
+- SQLite (testing)
+
+### Installation
+
+```bash
+git clone https://github.com/Hanifahsalsabila/uas-posyandu.git
+cd uas-posyandu
+
+# Setup otomatis
+composer run setup
+
+# Atau manual:
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+npm install --ignore-scripts
+npm run build
+```
+
+### Development Server
+
+```bash
+composer run dev
+```
+
+Menjalankan 4 proses concurrently:
+- `php artisan serve` — HTTP Server
+- `php artisan queue:listen` — Queue Worker
+- `php artisan pail` — Log Viewer
+- `npm run dev` — Vite HMR
+
+### Running Tests
+
+```bash
+composer run test
+```
+
+Atau:
+
+```bash
+php artisan config:clear
+php artisan test
+```
+
+---
+
+## Deployment
+
+### Production Checklist
+
+1. Set `APP_ENV=production`, `APP_DEBUG=false`
+2. Database: MySQL with `utf8mb4`
+3. Cache: `php artisan optimize`
+4. Queue: Supervisor for `queue:work`
+5. Storage: Symlink `php artisan storage:link`
+
+### Recommended Stack
+
+| Komponen | Rekomendasi |
+|----------|-------------|
+| Web Server | Nginx + PHP-FPM 8.3 |
+| Database | MySQL 8 / MariaDB 10 |
+| Cache | Redis / File |
+| Queue | Database / Redis |
+| SSL | Let's Encrypt |
+
+---
 
 ## Agentic Development
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Dokumen **[AGENT.md](AGENT.md)** berisi panduan lengkap untuk AI coding agents (OpenCode, Claude Code, Cursor, GitHub Copilot):
 
-```bash
-composer require laravel/boost --dev
+- Arsitektur & routing
+- Role access matrix
+- Coding standards
+- Workflow: edit → test → commit → CI
+- Known gaps & bugs
 
-php artisan boost:install
-```
+---
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Kontribusi
 
-## Contributing
+1. Baca [AGENT.md](AGENT.md) untuk standar kode
+2. Buat branch: `feat/nama-fitur` atau `fix/nama-bug`
+3. Test lokal: `composer run test`
+4. Build: `npm run build`
+5. Commit dengan format: `feat/fix: pesan jelas`
+6. Push → CI auto-test → PR
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Lisensi
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+MIT License — open source untuk pengembangan Posyandu di Indonesia.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+*Dibangun dengan ❤️ untuk layanan kesehatan ibu dan anak Indonesia.*
