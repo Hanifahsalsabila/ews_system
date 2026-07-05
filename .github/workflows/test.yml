@@ -41,6 +41,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Prepare env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
       - name: Run tests
         run: composer run test
         env:
