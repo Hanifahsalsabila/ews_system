@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('warga_id')->constrained('warga')->onDelete('cascade');
             $table->foreignId('sesi_posyandu_id')->constrained('sesi_posyandu')->onDelete('cascade');
-            
+
             // Meja 2 & 3: Antropometri
             $table->decimal('berat_badan', 5, 2)->nullable();
             $table->decimal('tinggi_badan', 5, 2)->nullable();
             $table->decimal('lingkar_kepala', 5, 2)->nullable();
             $table->decimal('lingkar_lengan', 5, 2)->nullable();
-            
+
             // Meja 4: Klinis/Pelayanan
             $table->string('tensi_darah')->nullable();
             $table->text('keluhan')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             // Meja 5: Validasi
             $table->boolean('is_validated')->default(false);
             $table->foreignId('petugas_id')->nullable()->constrained('users')->onDelete('set null');
-            
+
             $table->timestamps();
             $table->softDeletes();
         });

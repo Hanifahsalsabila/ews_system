@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Region extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
-    
+
     protected $fillable = ['name', 'type', 'parent_id'];
 
     public function parent()
@@ -29,22 +28,37 @@ class Region extends Model implements Auditable
 
     public function getDusunNameAttribute()
     {
-        if ($this->type === 'dusun') return $this->name;
-        if ($this->type === 'rw') return $this->parent?->name;
-        if ($this->type === 'rt') return $this->parent?->parent?->name;
+        if ($this->type === 'dusun') {
+            return $this->name;
+        }
+        if ($this->type === 'rw') {
+            return $this->parent?->name;
+        }
+        if ($this->type === 'rt') {
+            return $this->parent?->parent?->name;
+        }
+
         return null;
     }
 
     public function getRwNameAttribute()
     {
-        if ($this->type === 'rw') return $this->name;
-        if ($this->type === 'rt') return $this->parent?->name;
+        if ($this->type === 'rw') {
+            return $this->name;
+        }
+        if ($this->type === 'rt') {
+            return $this->parent?->name;
+        }
+
         return null;
     }
 
     public function getRtNameAttribute()
     {
-        if ($this->type === 'rt') return $this->name;
+        if ($this->type === 'rt') {
+            return $this->name;
+        }
+
         return null;
     }
 }

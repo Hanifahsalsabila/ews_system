@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -14,7 +15,7 @@ class Balita extends Model
     protected $fillable = [
         'warga_id',
         'nama_ayah',
-        'nama_ibu'
+        'nama_ibu',
     ];
 
     public function warga()
@@ -27,6 +28,6 @@ class Balita extends Model
      */
     public function getUmurBulanAttribute(): int
     {
-        return (int) \Carbon\Carbon::parse($this->warga->tanggal_lahir)->diffInMonths(now());
+        return (int) Carbon::parse($this->warga->tanggal_lahir)->diffInMonths(now());
     }
 }

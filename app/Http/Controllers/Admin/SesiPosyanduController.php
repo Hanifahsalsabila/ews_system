@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Absensi;
+use App\Models\KalkulasiZScore;
+use App\Models\Pemeriksaan;
+use App\Models\SesiPosyandu;
+use App\Models\Warga;
+use App\Services\WhoZscoreService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\SesiPosyandu;
 
 class SesiPosyanduController extends Controller
 {
@@ -15,6 +21,7 @@ class SesiPosyanduController extends Controller
     public function index()
     {
         $sessions = SesiPosyandu::orderBy('tanggal', 'desc')->get();
+
         return view('admin.sesi.index', compact('sessions'));
     }
 
@@ -61,6 +68,7 @@ class SesiPosyanduController extends Controller
         $sesi->save();
 
         $message = $sesi->status === 'aktif' ? 'Sesi berhasil dibuka kembali.' : 'Sesi berhasil ditutup (Selesai).';
+
         return redirect()->back()->with('success', $message);
     }
 
@@ -71,7 +79,7 @@ class SesiPosyanduController extends Controller
     {
         // Load relationships to show recent activities
         $sesi->load(['absensis.warga', 'pemeriksaans.warga']);
-        
+
         return view('admin.sesi.operasional', compact('sesi'));
     }
 
@@ -92,18 +100,18 @@ class SesiPosyanduController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        $warga = \App\Models\Warga::with(['balita'])->find($validated['warga_id']);
+        $warga = Warga::with(['balita'])->find($validated['warga_id']);
 
         DB::beginTransaction();
         try {
             // Meja 1: Absensi (Check-in)
-            \App\Models\Absensi::firstOrCreate([
+            Absensi::firstOrCreate([
                 'warga_id' => $validated['warga_id'],
                 'sesi_posyandu_id' => $sesi->id,
             ]);
 
             // Meja 2-5: Pemeriksaan
-            $pemeriksaan = \App\Models\Pemeriksaan::updateOrCreate(
+            $pemeriksaan = Pemeriksaan::updateOrCreate(
                 [
                     'warga_id' => $validated['warga_id'],
                     'sesi_posyandu_id' => $sesi->id,
@@ -115,33 +123,51 @@ class SesiPosyanduController extends Controller
             );
 
             // Enterprise Feature: Smart Analytics (WHO Z-Score)
-            if ($warga->balita) {
-                $dob = \Carbon\Carbon::parse($warga->tanggal_lahir);
-                $sessionDate = \Carbon\Carbon::parse($sesi->tanggal);
-                $ageInMonths = (int) $dob->diffInMonths($sessionDate);
+            if ($warga->balita && ! empty($validated['berat_badan']) && ! empty($validated['tinggi_badan'])) {
+                $dob = $warga->tanggal_lahir;
+                $sessionDate = $sesi->tanggal;
                 $gender = $warga->jenis_kelamin;
+                $posisiUkur = $request->input('posisi_ukur', 'terlentang');
 
-                $zscoreService = new \App\Services\WhoZscoreService();
-                
-                $zBbu = $zscoreService->calculate('BBU', $validated['berat_badan'], $ageInMonths, $gender);
-                $zTbu = $zscoreService->calculate('TBU', $validated['tinggi_badan'], $ageInMonths, $gender);
-                
-                \App\Models\KalkulasiZScore::updateOrCreate(
+                $zscoreService = new WhoZscoreService;
+
+                $bbuRes = $zscoreService->calculateBBU($validated['berat_badan'], $dob, $sessionDate, $gender);
+                $tbuRes = $zscoreService->calculateTBU($validated['tinggi_badan'], $dob, $sessionDate, $gender, $posisiUkur);
+                $bbtbRes = $zscoreService->calculateBBTB($validated['berat_badan'], $validated['tinggi_badan'], $dob, $sessionDate, $gender, $posisiUkur);
+
+                $zBbu = $bbuRes['zscore'];
+                $zTbu = $tbuRes['zscore'];
+                $zBbTb = $bbtbRes['zscore'];
+
+                KalkulasiZScore::updateOrCreate(
                     ['pemeriksaan_id' => $pemeriksaan->id],
                     [
                         'zscore_bb_u' => $zBbu,
+                        'raw_zscore_bb_u' => $bbuRes['raw_zscore'] ?? null,
+                        'flag_bb_u' => $bbuRes['flag'] ?? null,
                         'zscore_tb_u' => $zTbu,
-                        'status_gizi' => $zscoreService->getStatusBBU($zBbu),
-                        'status_stunting' => $zscoreService->getStatusTBU($zTbu),
+                        'raw_zscore_tb_u' => $tbuRes['raw_zscore'] ?? null,
+                        'flag_tb_u' => $tbuRes['flag'] ?? null,
+                        'zscore_bb_tb' => $zBbTb,
+                        'raw_zscore_bb_tb' => $bbtbRes['raw_zscore'] ?? null,
+                        'flag_bb_tb' => $bbtbRes['flag'] ?? null,
+                        'status_gizi' => $bbuRes['status'],
+                        'status_stunting' => $tbuRes['status'],
+                        'status_bb_tb' => $bbtbRes['status'],
+                        'age_in_days' => $bbuRes['age_in_days'] ?? $tbuRes['age_in_days'],
+                        'measurement_type' => $tbuRes['measurement_type'] ?? 'LENGTH',
+                        'source_version' => 'who_anthro_v1.1.0',
                     ]
                 );
             }
-            
+
             DB::commit();
+
             return response()->json(['message' => 'Data berhasil disimpan dan divalidasi.', 'data' => $pemeriksaan]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Gagal menyimpan: ' . $e->getMessage()], 500);
+
+            return response()->json(['message' => 'Gagal menyimpan: '.$e->getMessage()], 500);
         }
     }
 
@@ -151,6 +177,7 @@ class SesiPosyanduController extends Controller
     public function destroy(SesiPosyandu $sesiPosyandu)
     {
         $sesiPosyandu->delete();
+
         return redirect()->back()->with('success', 'Sesi Posyandu berhasil dihapus.');
     }
 }

@@ -44,9 +44,9 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         $loginId = $this->input('login_id') ?: $this->input('email');
-        
+
         $fieldType = filter_var($loginId, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-        
+
         if ($fieldType === 'username') {
             if (preg_match('/^[0-9]{16}$/', $loginId)) {
                 $fieldType = 'nik';
@@ -95,6 +95,7 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         $loginId = $this->input('login_id') ?: $this->input('email');
+
         return Str::transliterate(Str::lower($loginId).'|'.$this->ip());
     }
 }

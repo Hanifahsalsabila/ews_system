@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Kader;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\SesiPosyandu;
 use App\Models\Absensi;
+use App\Models\SesiPosyandu;
 use App\Models\Warga;
+use Illuminate\Http\Request;
 
 class KaderDashboardController extends Controller
 {
@@ -14,14 +14,14 @@ class KaderDashboardController extends Controller
     {
         // Get active session for today
         $activeSession = SesiPosyandu::whereDate('tanggal', today())->where('status', 'aktif')->first();
-        
+
         $stats = [
             'total_warga' => Warga::count(),
             'hadir_hari_ini' => $activeSession ? Absensi::where('sesi_posyandu_id', $activeSession->id)->count() : 0,
             'menunggu_pengukuran' => $activeSession ? Absensi::where('sesi_posyandu_id', $activeSession->id)
-                                    ->whereDoesntHave('warga.pemeriksaans', function($q) use ($activeSession) {
-                                        $q->where('sesi_posyandu_id', $activeSession->id);
-                                    })->count() : 0,
+                ->whereDoesntHave('warga.pemeriksaans', function ($q) use ($activeSession) {
+                    $q->where('sesi_posyandu_id', $activeSession->id);
+                })->count() : 0,
         ];
 
         return view('kader.dashboard.index', compact('activeSession', 'stats'));

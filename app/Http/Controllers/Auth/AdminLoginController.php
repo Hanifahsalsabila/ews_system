@@ -26,7 +26,7 @@ class AdminLoginController extends Controller
     {
         $request->authenticate();
 
-        if (!$request->user()->hasRole(['Super_Admin', 'Admin'])) {
+        if (! $request->user()->hasRole(['Super_Admin', 'Admin'])) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

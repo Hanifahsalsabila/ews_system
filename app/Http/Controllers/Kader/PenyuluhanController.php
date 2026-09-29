@@ -24,7 +24,7 @@ class PenyuluhanController extends Controller
 
     public function show(Penyuluhan $penyuluhan)
     {
-        if (!$penyuluhan->is_published) {
+        if (! $penyuluhan->is_published) {
             abort(404);
         }
 

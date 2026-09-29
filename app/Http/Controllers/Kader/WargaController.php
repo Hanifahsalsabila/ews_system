@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Kader;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Warga;
-use App\Models\Region;
 use App\Models\Balita;
 use App\Models\IbuHamil;
 use App\Models\Lansia;
+use App\Models\Region;
+use App\Models\User;
+use App\Models\Warga;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class WargaController extends Controller
 {
@@ -20,17 +22,18 @@ class WargaController extends Controller
 
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%");
+                    ->orWhere('nik', 'like', "%{$search}%");
             });
         }
 
         $wargas = $query->orderBy('nama')->paginate(15);
         $regions = Region::all();
-        
+
         return view('kader.warga.index', compact('wargas', 'regions'));
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -40,19 +43,19 @@ class WargaController extends Controller
             'nomor_telepon' => 'nullable|string|max:20',
             'region_id' => 'required|exists:regions,id',
             'cohort_type' => 'required|in:balita,ibu_hamil,lansia,umum',
-            
-            'jenis_kelamin' => 'nullable|in:L,P',
-            'tanggal_lahir' => 'nullable|date',
-            
+
+            'jenis_kelamin' => 'required_if:cohort_type,balita|nullable|in:L,P',
+            'tanggal_lahir' => 'required_if:cohort_type,balita|nullable|date',
+
             // Balita specific
-            'nama_ayah' => 'nullable|string|max:255',
-            'nama_ibu' => 'nullable|string|max:255',
-            
+            'nama_ayah' => 'required_if:cohort_type,balita|nullable|string|max:255',
+            'nama_ibu' => 'required_if:cohort_type,balita|nullable|string|max:255',
+
             // Ibu Hamil specific
-            'hpht' => 'nullable|date',
-            'hpl' => 'nullable|date',
-            'kehamilan_ke' => 'nullable|integer|min:1',
-            
+            'hpht' => 'required_if:cohort_type,ibu_hamil|nullable|date',
+            'hpl' => 'required_if:cohort_type,ibu_hamil|nullable|date',
+            'kehamilan_ke' => 'required_if:cohort_type,ibu_hamil|nullable|integer|min:1',
+
             // Lansia specific
             'golongan_darah' => 'nullable|string|max:5',
             'riwayat_penyakit' => 'nullable|string',
@@ -92,33 +95,37 @@ class WargaController extends Controller
             }
 
             DB::commit();
+
             return redirect()->back()->with('success', 'Data Warga berhasil didaftarkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Gagal menyimpan data: ' . $e->getMessage()])->withInput();
+
+            return redirect()->back()->withErrors(['error' => 'Gagal menyimpan data: '.$e->getMessage()])->withInput();
         }
     }
 
     public function update(Request $request, Warga $warga)
     {
         $validated = $request->validate([
-            'nik' => 'required|string|size:16|unique:warga,nik,' . $warga->id,
+            'nik' => 'required|string|size:16|unique:warga,nik,'.$warga->id,
             'nama' => 'required|string|max:255',
             'alamat_lengkap' => 'nullable|string',
             'nomor_telepon' => 'nullable|string|max:20',
             'region_id' => 'required|exists:regions,id',
-            
+
             // Cohort data updates (if exists)
-            'jenis_kelamin' => 'nullable|in:L,P',
-            'tanggal_lahir' => 'nullable|date',
-            'nama_ayah' => 'nullable|string|max:255',
-            'nama_ibu' => 'nullable|string|max:255',
-            'hpht' => 'nullable|date',
-            'hpl' => 'nullable|date',
-            'kehamilan_ke' => 'nullable|integer|min:1',
-            'golongan_darah' => 'nullable|string|max:5',
-            'riwayat_penyakit' => 'nullable|string',
+            // Since cohort type is implicit in update based on relations, we use conditional validation if the relation exists, but for simplicity we make them nullable or rely on frontend. Better yet, let's just make them required if they are present in the request or if the warga has a balita relation.
+            // A simpler approach: if it's a balita, these must be present.
         ]);
+
+        if ($warga->balita) {
+            $request->validate([
+                'jenis_kelamin' => 'required|in:L,P',
+                'tanggal_lahir' => 'required|date',
+                'nama_ayah' => 'required|string|max:255',
+                'nama_ibu' => 'required|string|max:255',
+            ]);
+        }
 
         DB::beginTransaction();
         try {
@@ -151,16 +158,19 @@ class WargaController extends Controller
             }
 
             DB::commit();
+
             return redirect()->back()->with('success', 'Data Warga berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Gagal memperbarui data: ' . $e->getMessage()])->withInput();
+
+            return redirect()->back()->withErrors(['error' => 'Gagal memperbarui data: '.$e->getMessage()])->withInput();
         }
     }
 
     public function destroy(Warga $warga)
     {
         $warga->delete();
+
         return redirect()->back()->with('success', 'Data Warga berhasil dihapus.');
     }
 
@@ -172,29 +182,29 @@ class WargaController extends Controller
 
         DB::beginTransaction();
         try {
-            $email = $warga->nik . '@eposyandu.local';
-            
+            $email = $warga->nik.'@eposyandu.local';
+
             // Cek apakah user dengan email atau NIK ini sudah ada
-            $user = \App\Models\User::where('email', $email)
-                                    ->orWhere('nik', $warga->nik)
-                                    ->orWhere('username', $warga->nik)
-                                    ->first();
-                                    
-            if (!$user) {
+            $user = User::where('email', $email)
+                ->orWhere('nik', $warga->nik)
+                ->orWhere('username', $warga->nik)
+                ->first();
+
+            if (! $user) {
                 // Jika belum ada, buat baru
-                $user = \App\Models\User::create([
+                $user = User::create([
                     'name' => $warga->nama,
                     'email' => $email,
                     'username' => $warga->nik,
                     'nik' => $warga->nik,
-                    'password' => \Illuminate\Support\Facades\Hash::make('posyandu123'),
+                    'password' => Hash::make('posyandu123'),
                     'is_active' => true,
                 ]);
                 $user->assignRole('orang_tua');
-                $message = 'Akun berhasil dibuat. NIK: ' . $warga->nik . ' / Password: posyandu123';
+                $message = 'Akun berhasil dibuat. NIK: '.$warga->nik.' / Password: posyandu123';
             } else {
                 // Pastikan role orang_tua ada pada user lama
-                if (!$user->hasRole('orang_tua')) {
+                if (! $user->hasRole('orang_tua')) {
                     $user->assignRole('orang_tua');
                 }
                 $message = 'Akun sudah ada di sistem dan berhasil dihubungkan ke data Warga.';
@@ -204,10 +214,12 @@ class WargaController extends Controller
             $warga->update(['user_id' => $user->id]);
 
             DB::commit();
+
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Gagal membuat akun: ' . $e->getMessage()]);
+
+            return redirect()->back()->withErrors(['error' => 'Gagal membuat akun: '.$e->getMessage()]);
         }
     }
 }

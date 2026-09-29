@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Penyuluhan extends Model
 {
@@ -22,13 +23,13 @@ class Penyuluhan extends Model
     ];
 
     public const KATEGORI_LIST = [
-        'gizi'       => 'Gizi & Nutrisi',
-        'imunisasi'  => 'Imunisasi',
+        'gizi' => 'Gizi & Nutrisi',
+        'imunisasi' => 'Imunisasi',
         'kebersihan' => 'Kebersihan & Sanitasi',
-        'ibu_hamil'  => 'Ibu Hamil',
-        'balita'     => 'Balita & Anak',
-        'lansia'     => 'Lansia',
-        'umum'       => 'Umum',
+        'ibu_hamil' => 'Ibu Hamil',
+        'balita' => 'Balita & Anak',
+        'lansia' => 'Lansia',
+        'umum' => 'Umum',
     ];
 
     public function penulis()
@@ -43,7 +44,7 @@ class Penyuluhan extends Model
 
     public function getExcerptAttribute(): string
     {
-        return \Illuminate\Support\Str::limit(strip_tags($this->konten), 120);
+        return Str::limit(strip_tags($this->konten), 120);
     }
 
     public function getKategoriLabelAttribute(): string

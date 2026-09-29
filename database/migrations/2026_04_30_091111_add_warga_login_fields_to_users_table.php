@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'username')) {
+            if (! Schema::hasColumn('users', 'username')) {
                 $table->string('username')->unique()->nullable()->after('name');
             }
             $table->string('phone_number')->unique()->nullable()->after('username');
@@ -32,7 +32,7 @@ return new class extends Migration
                 Schema::hasColumn('users', 'phone_number') ? 'phone_number' : null,
                 Schema::hasColumn('users', 'nik') ? 'nik' : null,
             ]);
-            if (!empty($columns)) {
+            if (! empty($columns)) {
                 $table->dropColumn($columns);
             }
             $table->string('email')->nullable(false)->change();

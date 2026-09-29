@@ -4,12 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Pemeriksaan extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'pemeriksaan';
 
     protected $fillable = [
@@ -17,6 +17,7 @@ class Pemeriksaan extends Model implements Auditable
         'sesi_posyandu_id',
         'berat_badan',
         'tinggi_badan',
+        'posisi_ukur',
         'lingkar_kepala',
         'lingkar_lengan',
         'tfu',

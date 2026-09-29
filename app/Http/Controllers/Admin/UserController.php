@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -23,7 +22,7 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -42,6 +41,7 @@ class UserController extends Controller
 
         $users = $query->latest()->paginate(10)->withQueryString();
         $roles = Role::whereIn('name', ['Super_Admin', 'Puskesmas', 'Kader_Posyandu'])->get();
+
         return view('admin.users.index', compact('users', 'roles'));
     }
 
@@ -70,7 +70,7 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['required', 'string', 'exists:roles,name'],
         ]);
@@ -97,6 +97,7 @@ class UserController extends Controller
         }
 
         $user->delete();
+
         return redirect()->route('admin.users.index')
             ->with('success', 'Pengguna berhasil dihapus.');
     }
@@ -108,10 +109,11 @@ class UserController extends Controller
         }
 
         $user->update([
-            'is_active' => !$user->is_active
+            'is_active' => ! $user->is_active,
         ]);
 
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
         return redirect()->back()->with('success', "Akun pengguna berhasil {$status}.");
     }
 }

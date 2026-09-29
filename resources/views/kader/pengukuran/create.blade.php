@@ -27,11 +27,11 @@
                         </div>
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-teal-700 font-bold">Tgl Lahir</span>
-                            <span class="text-slate-700 font-medium">{{ \Carbon\Carbon::parse($warga->balita->tanggal_lahir)->format('d M Y') }}</span>
+                            <span class="text-slate-700 font-medium">{{ $warga->tanggal_lahir ? \Carbon\Carbon::parse($warga->tanggal_lahir)->format('d M Y') : '-' }}</span>
                         </div>
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-teal-700 font-bold">Umur</span>
-                            <span class="text-slate-700 font-medium">{{ intval(\Carbon\Carbon::parse($warga->balita->tanggal_lahir)->diffInMonths(now())) }} Bulan</span>
+                            <span class="text-slate-700 font-medium">{{ $warga->umur_formatted }}</span>
                         </div>
                     @elseif($warga->ibuHamil)
                         <div class="flex justify-between items-center text-sm">

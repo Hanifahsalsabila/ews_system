@@ -21,16 +21,17 @@ class PenyuluhanController extends Controller
     public function create()
     {
         $kategoris = Penyuluhan::KATEGORI_LIST;
+
         return view('bidan.penyuluhan.create', compact('kategoris'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'judul'    => 'required|string|max:255',
-            'konten'   => 'nullable|string',
-            'gambar'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'kategori' => 'required|in:' . implode(',', array_keys(Penyuluhan::KATEGORI_LIST)),
+            'judul' => 'required|string|max:255',
+            'konten' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'kategori' => 'required|in:'.implode(',', array_keys(Penyuluhan::KATEGORI_LIST)),
         ]);
 
         $data = $request->only('judul', 'konten', 'kategori');
@@ -57,6 +58,7 @@ class PenyuluhanController extends Controller
         }
 
         $kategoris = Penyuluhan::KATEGORI_LIST;
+
         return view('bidan.penyuluhan.edit', compact('penyuluhan', 'kategoris'));
     }
 
@@ -67,10 +69,10 @@ class PenyuluhanController extends Controller
         }
 
         $request->validate([
-            'judul'    => 'required|string|max:255',
-            'konten'   => 'nullable|string',
-            'gambar'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'kategori' => 'required|in:' . implode(',', array_keys(Penyuluhan::KATEGORI_LIST)),
+            'judul' => 'required|string|max:255',
+            'konten' => 'nullable|string',
+            'gambar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'kategori' => 'required|in:'.implode(',', array_keys(Penyuluhan::KATEGORI_LIST)),
         ]);
 
         $data = $request->only('judul', 'konten', 'kategori');
@@ -83,7 +85,7 @@ class PenyuluhanController extends Controller
             $data['gambar'] = $request->file('gambar')->store('penyuluhan', 'public');
         }
 
-        if ($request->has('hapus_gambar') && !$request->hasFile('gambar')) {
+        if ($request->has('hapus_gambar') && ! $request->hasFile('gambar')) {
             if ($penyuluhan->gambar) {
                 Storage::disk('public')->delete($penyuluhan->gambar);
             }
@@ -102,11 +104,12 @@ class PenyuluhanController extends Controller
         }
 
         $penyuluhan->update([
-            'is_published' => !$penyuluhan->is_published,
-            'published_at' => !$penyuluhan->is_published ? now() : $penyuluhan->published_at,
+            'is_published' => ! $penyuluhan->is_published,
+            'published_at' => ! $penyuluhan->is_published ? now() : $penyuluhan->published_at,
         ]);
 
         $status = $penyuluhan->is_published ? 'dipublikasikan' : 'disimpan sebagai draft';
+
         return back()->with('success', "Materi berhasil {$status}.");
     }
 

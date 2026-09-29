@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Warga;
 
 use App\Http\Controllers\Controller;
 use App\Models\Absensi;
-use App\Models\SesiPosyandu;
-use Illuminate\Support\Facades\DB;
 
 class BadgeController extends Controller
 {
@@ -33,7 +31,9 @@ class BadgeController extends Controller
     private function awardBadges($user): void
     {
         $warga = $user->warga;
-        if (!$warga) return;
+        if (! $warga) {
+            return;
+        }
 
         $attendedMonths = Absensi::where('warga_id', $warga->id)
             ->where('status', 'hadir')
@@ -48,11 +48,10 @@ class BadgeController extends Controller
         $currentBadges = $user->badges ?? [];
 
         foreach ($this->badgeDefinitions as $def) {
-            $alreadyEarned = collect($currentBadges)->first(fn($b) =>
-                is_array($b) && ($b['name'] ?? null) === $def['name']
+            $alreadyEarned = collect($currentBadges)->first(fn ($b) => is_array($b) && ($b['name'] ?? null) === $def['name']
             );
 
-            if (!$alreadyEarned && $streak >= $def['streak']) {
+            if (! $alreadyEarned && $streak >= $def['streak']) {
                 $currentBadges[] = [
                     'name' => $def['name'],
                     'icon' => $def['icon'],
@@ -69,14 +68,16 @@ class BadgeController extends Controller
 
     private function calculateConsecutiveStreak(array $months): int
     {
-        if (empty($months)) return 0;
+        if (empty($months)) {
+            return 0;
+        }
 
         $streak = 1;
         $maxStreak = 1;
 
         for ($i = 1; $i < count($months); $i++) {
-            $prev = new \DateTime($months[$i - 1] . '-01');
-            $curr = new \DateTime($months[$i] . '-01');
+            $prev = new \DateTime($months[$i - 1].'-01');
+            $curr = new \DateTime($months[$i].'-01');
             $diff = (int) $prev->diff($curr)->m + ((int) $prev->diff($curr)->y * 12);
 
             if ($diff === 1) {

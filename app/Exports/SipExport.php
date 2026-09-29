@@ -2,13 +2,13 @@
 
 namespace App\Exports;
 
+use App\Models\SesiPosyandu;
+use App\Models\Warga;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use App\Models\Warga;
-use App\Models\SesiPosyandu;
 
 class SipExport implements FromView, ShouldAutoSize, WithStyles
 {
@@ -36,7 +36,7 @@ class SipExport implements FromView, ShouldAutoSize, WithStyles
             $data = Warga::whereHas('balita')->with(['balita', 'pemeriksaans', 'region.parent.parent'])->get();
         } elseif ($format_id == 3) {
             // WUS PUS
-            $data = Warga::whereDoesntHave('balita')->whereDoesntHave('ibuHamil')->whereHas('pemeriksaans', function($q) use ($bulan, $tahun) {
+            $data = Warga::whereDoesntHave('balita')->whereDoesntHave('ibuHamil')->whereHas('pemeriksaans', function ($q) {
                 // Approximate filtering
             })->with('region.parent.parent')->get();
             if ($data->isEmpty()) {
@@ -45,9 +45,9 @@ class SipExport implements FromView, ShouldAutoSize, WithStyles
         } elseif ($format_id == 5 || $format_id == 6) {
             // Sesi Posyandu & Operasional
             $data = SesiPosyandu::whereYear('tanggal', $tahun)
-                                ->whereMonth('tanggal', $bulan)
-                                ->withCount('absensis', 'pemeriksaans')
-                                ->get();
+                ->whereMonth('tanggal', $bulan)
+                ->withCount('absensis', 'pemeriksaans')
+                ->get();
         }
 
         return view('admin.laporan.export', [
@@ -64,7 +64,7 @@ class SipExport implements FromView, ShouldAutoSize, WithStyles
     {
         return [
             // Style the first row as bold text.
-            1    => ['font' => ['bold' => true]],
+            1 => ['font' => ['bold' => true]],
         ];
     }
 }

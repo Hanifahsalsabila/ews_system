@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,9 +19,9 @@ return new class extends Migration
 
         // Migrate existing data from balita table to warga table
         if (Schema::hasTable('balita')) {
-            $balitas = \Illuminate\Support\Facades\DB::table('balita')->get();
+            $balitas = DB::table('balita')->get();
             foreach ($balitas as $balita) {
-                \Illuminate\Support\Facades\DB::table('warga')
+                DB::table('warga')
                     ->where('id', $balita->warga_id)
                     ->update([
                         'jenis_kelamin' => $balita->jenis_kelamin,

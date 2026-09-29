@@ -14,7 +14,7 @@ class Lansia extends Model
     protected $fillable = [
         'warga_id',
         'golongan_darah',
-        'riwayat_penyakit'
+        'riwayat_penyakit',
     ];
 
     public function warga()

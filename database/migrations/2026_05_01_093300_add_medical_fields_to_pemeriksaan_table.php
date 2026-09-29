@@ -39,7 +39,7 @@ return new class extends Migration
                 'vitamin_a', 'obat_cacing', 'asi_eksklusif', 'pmt',
                 'suplementasi_fe', 'status_tt',
                 'gula_darah', 'kolesterol', 'asam_urat', 'imt',
-                'tipe_kohort'
+                'tipe_kohort',
             ]);
         });
     }

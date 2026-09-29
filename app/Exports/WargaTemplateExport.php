@@ -3,11 +3,11 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatting
+class WargaTemplateExport implements FromArray, WithColumnFormatting, WithHeadings
 {
     public function headings(): array
     {
@@ -21,7 +21,7 @@ class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatti
             'RT',
             'KOHORT',
             'JENIS_KELAMIN',
-            'TANGGAL_LAHIR'
+            'TANGGAL_LAHIR',
         ];
     }
 
@@ -38,7 +38,7 @@ class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatti
                 '01',
                 'Umum',
                 '',
-                ''
+                '',
             ],
             [
                 '3501234567890002',
@@ -50,7 +50,7 @@ class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatti
                 '02',
                 'Ibu Hamil',
                 'P',
-                '1995-05-15'
+                '1995-05-15',
             ],
             [
                 '3501234567890003',
@@ -62,8 +62,8 @@ class WargaTemplateExport implements FromArray, WithHeadings, WithColumnFormatti
                 '02',
                 'Balita',
                 'L',
-                '2024-01-10'
-            ]
+                '2024-01-10',
+            ],
         ];
     }
 

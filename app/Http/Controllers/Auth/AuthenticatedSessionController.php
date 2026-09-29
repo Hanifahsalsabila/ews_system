@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Warga;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,9 +31,9 @@ class AuthenticatedSessionController extends Controller
 
         // Cek jika user orang tua tapi belum punya data warga
         if ($user->hasRole('orang_tua')) {
-            $hasWarga = \App\Models\Warga::where('user_id', $user->id)->exists();
-            
-            if (!$hasWarga) {
+            $hasWarga = Warga::where('user_id', $user->id)->exists();
+
+            if (! $hasWarga) {
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

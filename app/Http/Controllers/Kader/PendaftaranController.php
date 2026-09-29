@@ -3,15 +3,11 @@
 namespace App\Http\Controllers\Kader;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\SesiPosyandu;
 use App\Models\Absensi;
+use App\Models\SesiPosyandu;
 use App\Models\Warga;
-use App\Models\Region;
-use App\Models\Balita;
-use App\Models\IbuHamil;
-use App\Models\Lansia;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 
 class PendaftaranController extends Controller
 {
@@ -19,7 +15,7 @@ class PendaftaranController extends Controller
     {
         $activeSession = SesiPosyandu::whereDate('tanggal', today())->where('status', 'aktif')->first();
         $recentAbsensi = collect();
-        
+
         if ($activeSession) {
             $recentAbsensi = Absensi::with('warga')->where('sesi_posyandu_id', $activeSession->id)->latest()->take(10)->get();
         }
@@ -57,7 +53,7 @@ class PendaftaranController extends Controller
             $parts = explode(':', $nikInput, 2);
             $decodedNik = base64_decode($parts[0]);
             $providedSig = $parts[1] ?? '';
-            
+
             // Verify signature
             $expectedSig = substr(hash_hmac('sha256', $decodedNik, config('app.key')), 0, 16);
             if ($providedSig !== $expectedSig) {
@@ -67,7 +63,7 @@ class PendaftaranController extends Controller
         } elseif (strlen($nikInput) > 16) {
             // Legacy encrypted token
             try {
-                $nikInput = \Illuminate\Support\Facades\Crypt::decryptString($nikInput);
+                $nikInput = Crypt::decryptString($nikInput);
             } catch (\Exception $e) {
                 return response()->json(['success' => false, 'message' => 'QR Code tidak valid atau rusak.']);
             }
@@ -75,22 +71,22 @@ class PendaftaranController extends Controller
         // else: plain NIK, use as-is
 
         $warga = Warga::where('nik', $nikInput)->first();
-        if (!$warga) {
+        if (! $warga) {
             return response()->json(['success' => false, 'message' => 'Data warga dengan NIK tersebut tidak ditemukan.']);
         }
 
         $exists = Absensi::where('warga_id', $warga->id)->where('sesi_posyandu_id', $request->sesi_id)->exists();
         if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Warga ' . $warga->nama . ' sudah terdaftar hadir pada sesi ini.']);
+            return response()->json(['success' => false, 'message' => 'Warga '.$warga->nama.' sudah terdaftar hadir pada sesi ini.']);
         }
 
         $absensi = Absensi::create([
             'warga_id' => $warga->id,
             'sesi_posyandu_id' => $request->sesi_id,
-            'status' => 'hadir'
+            'status' => 'hadir',
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Warga ' . $warga->nama . ' berhasil dicatat kehadirannya.', 'warga' => $warga]);
+        return response()->json(['success' => true, 'message' => 'Warga '.$warga->nama.' berhasil dicatat kehadirannya.', 'warga' => $warga]);
     }
 
     public function store(Request $request)
@@ -100,27 +96,26 @@ class PendaftaranController extends Controller
         ]);
 
         $warga = Warga::where('nik', $request->nik)->first();
-        if (!$warga) {
+        if (! $warga) {
             return back()->with('error', 'Warga dengan NIK tersebut tidak ditemukan.');
         }
 
         $activeSession = SesiPosyandu::whereDate('tanggal', today())->where('status', 'aktif')->first();
-        if (!$activeSession) {
+        if (! $activeSession) {
             return back()->with('error', 'Tidak ada Sesi Posyandu aktif hari ini.');
         }
 
         $exists = Absensi::where('warga_id', $warga->id)->where('sesi_posyandu_id', $activeSession->id)->exists();
         if ($exists) {
-            return back()->with('error', 'Warga ' . $warga->nama . ' sudah terdaftar absen hari ini.');
+            return back()->with('error', 'Warga '.$warga->nama.' sudah terdaftar absen hari ini.');
         }
 
         Absensi::create([
             'warga_id' => $warga->id,
             'sesi_posyandu_id' => $activeSession->id,
-            'status' => 'hadir'
+            'status' => 'hadir',
         ]);
 
-        return back()->with('success', 'Kehadiran ' . $warga->nama . ' berhasil dicatat.');
+        return back()->with('success', 'Kehadiran '.$warga->nama.' berhasil dicatat.');
     }
-
 }

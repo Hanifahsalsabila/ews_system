@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\SipExport;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Warga;
-use App\Models\SesiPosyandu;
 use App\Models\Pemeriksaan;
+use App\Models\SesiPosyandu;
+use App\Models\Warga;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PelaporanController extends Controller
 {
@@ -33,8 +35,8 @@ class PelaporanController extends Controller
 
         $fileName = 'Laporan_SIP_'.$request->format_id.'_'.$request->bulan.'_'.$request->tahun.'.xlsx';
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\SipExport($request->all()), 
+        return Excel::download(
+            new SipExport($request->all()),
             $fileName
         );
     }

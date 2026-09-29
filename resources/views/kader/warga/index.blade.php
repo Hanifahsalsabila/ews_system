@@ -94,7 +94,7 @@
                                     @endif
                                     @if($warga->jenis_kelamin && $warga->tanggal_lahir) &bull; @endif
                                     @if($warga->tanggal_lahir)
-                                        {{ \Carbon\Carbon::parse($warga->tanggal_lahir)->age }} Thn
+                                        {{ $warga->umur_formatted }}
                                     @endif
                                 </div>
                             </td>

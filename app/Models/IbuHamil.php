@@ -15,7 +15,7 @@ class IbuHamil extends Model
         'warga_id',
         'hpht',
         'hpl',
-        'kehamilan_ke'
+        'kehamilan_ke',
     ];
 
     public function warga()

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
 use App\Models\Region;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class RegionController extends Controller
@@ -14,6 +13,7 @@ class RegionController extends Controller
     {
         $regions = Region::with('parent')->latest()->paginate(10);
         $allRegions = Region::all();
+
         return view('admin.regions.index', compact('regions', 'allRegions'));
     }
 
@@ -26,14 +26,14 @@ class RegionController extends Controller
                 'max:255',
                 Rule::unique('regions')->where(function ($query) use ($request) {
                     return $query->where('type', $request->type)
-                                 ->where('parent_id', $request->parent_id);
-                })
+                        ->where('parent_id', $request->parent_id);
+                }),
             ],
             'type' => 'required|in:dusun,rw,rt',
             'parent_id' => 'required_unless:type,dusun|nullable|exists:regions,id',
         ], [
             'name.unique' => 'Nama wilayah tersebut sudah terdaftar di lokasi induk ini.',
-            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.'
+            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.',
         ]);
 
         Region::create([
@@ -54,14 +54,14 @@ class RegionController extends Controller
                 'max:255',
                 Rule::unique('regions')->where(function ($query) use ($request) {
                     return $query->where('type', $request->type)
-                                 ->where('parent_id', $request->parent_id);
-                })->ignore($region->id)
+                        ->where('parent_id', $request->parent_id);
+                })->ignore($region->id),
             ],
             'type' => 'required|in:dusun,rw,rt',
             'parent_id' => 'required_unless:type,dusun|nullable|exists:regions,id',
         ], [
             'name.unique' => 'Nama wilayah tersebut sudah terdaftar di lokasi induk ini.',
-            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.'
+            'parent_id.required_unless' => 'Induk Wilayah wajib dipilih untuk tipe RW dan RT.',
         ]);
 
         $region->update([
