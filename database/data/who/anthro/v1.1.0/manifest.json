@@ -1,0 +1,48 @@
+{
+    "source": "World Health Organization",
+    "package": "WHO Anthro for PC",
+    "version": "v1.1.0",
+    "commit": "canonical-lms-v1.1.0",
+    "retrieval_date": "2026-09-23",
+    "files": {
+        "weianthro.txt": {
+            "filename": "weianthro.txt",
+            "indicator": "WAZ",
+            "row_count": 3654,
+            "sex_mapping": {"1": "Male", "2": "Female"},
+            "age_range_days": [0, 1826],
+            "sha256": "BC15A6A623DD1D5BEAEED1497666332AA54BC4CCD15FF9658C487D79694AB77B",
+            "status": "verified"
+        },
+        "lenanthro.txt": {
+            "filename": "lenanthro.txt",
+            "indicator": "HAZ",
+            "row_count": 3654,
+            "sex_mapping": {"1": "Male", "2": "Female"},
+            "age_range_days": [0, 1826],
+            "sha256": "709F7A11881451DAF7820F022D363D5BDB93746B5361D6BD9218AF6FF838E0C2",
+            "status": "verified",
+            "metadata_column": "loh"
+        },
+        "wflanthro.txt": {
+            "filename": "wflanthro.txt",
+            "indicator": "WFL",
+            "row_count": 1302,
+            "sex_mapping": {"1": "Male", "2": "Female"},
+            "length_range_cm": [45.0, 110.0],
+            "sha256": "AD470CF41B147BD2A16026E57FD17968DF7BF746B9F0BF2FF85DF95239643778",
+            "status": "verified",
+            "metadata_column": "lorh"
+        },
+        "wfhanthro.txt": {
+            "filename": "wfhanthro.txt",
+            "indicator": "WFH",
+            "row_count": 1102,
+            "sex_mapping": {"1": "Male", "2": "Female"},
+            "height_range_cm": [65.0, 120.0],
+            "sha256": "0050D31041C2F7D4F8A34F27E8066FD73A24806835B9E4A0DE1A7EE46D54D582",
+            "status": "verified",
+            "metadata_column": "lorh"
+        }
+    }
+}

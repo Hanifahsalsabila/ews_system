@@ -35,9 +35,11 @@
                 @php
                     $latestCheck = $riwayatPemeriksaan->last();
                     $isZonaMerah = false;
-                    $peringatan = "";
+                    $stuntingStatuses = ['Pendek (Stunted)', 'Sangat Pendek (Severely Stunted)', 'Stunting'];
+                    $bgmStatuses = ['Sangat Kurang (Severely Underweight)', 'Kurang', 'BGM'];
+                    
                     if($latestCheck) {
-                        if($latestCheck->status_stunting == 'Stunting' || $latestCheck->status_gizi == 'BGM' || $latestCheck->zscore_bb_u < -2) {
+                        if(in_array($latestCheck->status_stunting, $stuntingStatuses) || in_array($latestCheck->status_gizi, $bgmStatuses)) {
                             $isZonaMerah = true;
                             $peringatan = "Perhatian! Anak berada di Zona Merah (Stunting/Gizi Buruk/BGM). Segera tindaklanjuti.";
                         }
@@ -105,9 +107,9 @@
                                             <td class="px-3 py-2">{{ $cek->created_at->format('d M Y') }}</td>
                                             <td class="px-3 py-2">{{ $umurBln }} Bulan</td>
                                             <td class="px-3 py-2">{{ $cek->berat_badan }} kg</td>
-                                            <td class="px-3 py-2">{{ number_format((float)$cek->zscore_bb_u, 2) }}</td>
+                                            <td class="px-3 py-2">{{ is_null($cek->zscore_bb_u) ? 'N/A' : number_format((float)$cek->zscore_bb_u, 2) }}</td>
                                             <td class="px-3 py-2">
-                                                @if($cek->status_stunting == 'Stunting' || $cek->status_gizi == 'BGM')
+                                                @if(in_array($cek->status_stunting, $stuntingStatuses) || in_array($cek->status_gizi, $bgmStatuses))
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Zona Merah</span>
                                                 @else
                                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Normal</span>

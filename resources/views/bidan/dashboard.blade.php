@@ -94,6 +94,81 @@
                 </div>
             </div>
 
+            <!-- Priority Alert Matrix (EWS) -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+                <div class="p-6 lg:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                            <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Priority Alert Decision Matrix (EWS)
+                        </h3>
+                        <p class="text-sm text-slate-500 font-medium mt-1">Daftar balita berisiko yang memerlukan tindakan klinis atau rujukan segera berdasarkan Z-Score WHO.</p>
+                    </div>
+                </div>
+                <div class="p-0">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider font-bold border-b border-slate-100">
+                                    <th class="px-6 py-4">Nama Balita</th>
+                                    <th class="px-6 py-4">Tingkat Risiko</th>
+                                    <th class="px-6 py-4">Status Z-Score</th>
+                                    <th class="px-6 py-4 w-1/3">Rekomendasi / Pesan EWS</th>
+                                    <th class="px-6 py-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100/80">
+                                @forelse($ewsAlerts as $alert)
+                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="font-bold text-slate-800">{{ $alert->pemeriksaan->warga->nama }}</div>
+                                            <div class="text-xs text-slate-500 mt-0.5">NIK: {{ $alert->pemeriksaan->warga->nik }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @if($alert->ews_status == 'bahaya')
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> Bahaya (Merah)
+                                                </span>
+                                            @elseif($alert->ews_status == 'risiko_tinggi')
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Risiko Tinggi (Oranye)
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Waspada (Kuning)
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm font-semibold text-slate-700">BBU: {{ is_null($alert->zscore_bb_u) ? 'N/A' : number_format((float)$alert->zscore_bb_u, 2) }}</div>
+                                            <div class="text-xs text-slate-500">{{ $alert->status_gizi }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ $alert->ews_message }}</p>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="{{ route('bidan.pemeriksaan.balita') }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white transition-all bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 shadow-sm">
+                                                Tindak Lanjut
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-12 text-center">
+                                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-4">
+                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                            </div>
+                                            <h3 class="text-lg font-bold text-slate-800">Tidak ada Peringatan EWS</h3>
+                                            <p class="text-sm text-slate-500 mt-1">Semua data pertumbuhan balita terpantau normal.</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- Chart Section -->
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
                 <div class="p-6 lg:p-8">

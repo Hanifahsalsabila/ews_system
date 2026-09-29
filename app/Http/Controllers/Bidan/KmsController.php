@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Bidan;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Balita;
 use App\Models\Pemeriksaan;
-use App\Models\KalkulasiZScore;
+use Illuminate\Http\Request;
 
 class KmsController extends Controller
 {
@@ -19,7 +18,7 @@ class KmsController extends Controller
 
         if ($request->has('balita_id')) {
             $selectedBalita = Balita::with('warga')->where('warga_id', $request->balita_id)->first();
-            
+
             if ($selectedBalita) {
                 $riwayatPemeriksaan = Pemeriksaan::with('sesiPosyandu')
                     ->leftJoin('kalkulasi_zscore', 'pemeriksaan.id', '=', 'kalkulasi_zscore.pemeriksaan_id')
@@ -35,13 +34,13 @@ class KmsController extends Controller
                 foreach ($riwayatPemeriksaan as $p) {
                     $labels[] = $p->created_at->format('M Y');
                     $beratBadan[] = $p->berat_badan;
-                    $zScoreBBU[] = $p->zscore_bb_u ?? 0;
+                    $zScoreBBU[] = $p->zscore_bb_u;
                 }
 
                 $chartData = [
                     'labels' => $labels,
                     'beratBadan' => $beratBadan,
-                    'zScoreBBU' => $zScoreBBU
+                    'zScoreBBU' => $zScoreBBU,
                 ];
             }
         }

@@ -53,19 +53,19 @@
         {{-- BB/U --}}
         <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 text-center">
             <p class="text-[10px] font-black text-blue-400 uppercase tracking-wider mb-1">BB/U</p>
-            <p class="text-lg font-black text-blue-600">{{ number_format($latestZScore->zscore_bb_u ?? 0, 1) }}</p>
+            <p class="text-lg font-black text-blue-600">{{ is_null($latestZScore->zscore_bb_u) ? 'N/A' : number_format($latestZScore->zscore_bb_u, 1) }}</p>
             <p class="text-[9px] font-bold text-blue-400 mt-1">Z-Score</p>
         </div>
         {{-- TB/U --}}
         <div class="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-4 text-center">
             <p class="text-[10px] font-black text-emerald-400 uppercase tracking-wider mb-1">TB/U</p>
-            <p class="text-lg font-black text-emerald-600">{{ number_format($latestZScore->zscore_tb_u ?? 0, 1) }}</p>
+            <p class="text-lg font-black text-emerald-600">{{ is_null($latestZScore->zscore_tb_u) ? 'N/A' : number_format($latestZScore->zscore_tb_u, 1) }}</p>
             <p class="text-[9px] font-bold text-emerald-400 mt-1">Z-Score</p>
         </div>
         {{-- BB/TB --}}
         <div class="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-4 text-center">
             <p class="text-[10px] font-black text-amber-400 uppercase tracking-wider mb-1">BB/TB</p>
-            <p class="text-lg font-black text-amber-600">{{ number_format($latestZScore->zscore_bb_tb ?? 0, 1) }}</p>
+            <p class="text-lg font-black text-amber-600">{{ is_null($latestZScore->zscore_bb_tb) ? 'N/A' : number_format($latestZScore->zscore_bb_tb, 1) }}</p>
             <p class="text-[9px] font-bold text-amber-400 mt-1">Z-Score</p>
         </div>
     </div>
@@ -73,21 +73,31 @@
     {{-- Status Indicators --}}
     <div class="mt-4 flex items-center gap-2 flex-wrap">
         @php
-            $statusStunting = strtolower($latestZScore->status_stunting ?? '');
-            $statusGizi = strtolower($latestZScore->status_gizi ?? '');
+            $rawStatusStunting = $latestZScore->status_stunting ?? '';
+            $rawStatusGizi = $latestZScore->status_gizi ?? '';
+            
+            $statusStunting = strtolower($rawStatusStunting);
+            $statusGizi = strtolower($rawStatusGizi);
+            
             $stuntingColor = match(true) {
+                $statusStunting == 'out_of_reference_range' => 'bg-slate-50 text-slate-500 border-slate-200',
                 str_contains($statusStunting, 'normal') => 'bg-emerald-50 text-emerald-600 border-emerald-200',
                 str_contains($statusStunting, 'pendek') => 'bg-amber-50 text-amber-600 border-amber-200',
                 default => 'bg-rose-50 text-rose-600 border-rose-200',
             };
+            
             $giziColor = match(true) {
+                $statusGizi == 'out_of_reference_range' => 'bg-slate-50 text-slate-500 border-slate-200',
                 str_contains($statusGizi, 'baik') || str_contains($statusGizi, 'normal') => 'bg-emerald-50 text-emerald-600 border-emerald-200',
                 str_contains($statusGizi, 'kurang') => 'bg-amber-50 text-amber-600 border-amber-200',
                 default => 'bg-rose-50 text-rose-600 border-rose-200',
             };
+            
+            $stuntingLabel = $rawStatusStunting == 'out_of_reference_range' ? 'Di Luar Referensi' : ($rawStatusStunting ?: '-');
+            $giziLabel = $rawStatusGizi == 'out_of_reference_range' ? 'Di Luar Referensi' : ($rawStatusGizi ?: '-');
         @endphp
-        <span class="text-[10px] font-black px-3 py-1.5 rounded-xl border {{ $stuntingColor }}">{{ $latestZScore->status_stunting ?? '-' }}</span>
-        <span class="text-[10px] font-black px-3 py-1.5 rounded-xl border {{ $giziColor }}">{{ $latestZScore->status_gizi ?? '-' }}</span>
+        <span class="text-[10px] font-black px-3 py-1.5 rounded-xl border {{ $stuntingColor }}">{{ $stuntingLabel }}</span>
+        <span class="text-[10px] font-black px-3 py-1.5 rounded-xl border {{ $giziColor }}">{{ $giziLabel }}</span>
     </div>
 </div>
 @endif

@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Bidan;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Balita;
+use App\Models\IbuHamil;
+use App\Models\KalkulasiZScore;
+use App\Models\Lansia;
 use App\Models\Pemeriksaan;
 use App\Models\SesiPosyandu;
-use App\Models\IbuHamil;
-use App\Models\Balita;
-use App\Models\Lansia;
 use App\Models\Warga;
+use App\Services\WhoZscoreService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PemeriksaanController extends Controller
 {
@@ -115,7 +120,7 @@ class PemeriksaanController extends Controller
 
         if ($request->has('imunisasi')) {
             $imunisasiStr = implode(', ', $request->imunisasi);
-            $tindakan = $tindakan ? $tindakan . ' | Imunisasi: ' . $imunisasiStr : 'Imunisasi: ' . $imunisasiStr;
+            $tindakan = $tindakan ? $tindakan.' | Imunisasi: '.$imunisasiStr : 'Imunisasi: '.$imunisasiStr;
         }
 
         // Calculate IMT if both weight and height are provided
@@ -130,6 +135,7 @@ class PemeriksaanController extends Controller
         $data = [
             'berat_badan' => $request->berat_badan ?? ($pemeriksaan->berat_badan ?? null),
             'tinggi_badan' => $request->tinggi_badan ?? ($pemeriksaan->tinggi_badan ?? null),
+            'posisi_ukur' => $request->input('posisi_ukur', 'terlentang'),
             'lingkar_kepala' => $request->lingkar_kepala ?? ($pemeriksaan->lingkar_kepala ?? null),
             'lingkar_lengan' => $request->lingkar_lengan ?? ($pemeriksaan->lingkar_lengan ?? null),
             'tfu' => $request->tfu ?? ($pemeriksaan->tfu ?? null),
@@ -153,46 +159,75 @@ class PemeriksaanController extends Controller
             'imt' => $imt,
             // Validation
             'is_validated' => true,
-            'petugas_id' => auth()->id()
+            'petugas_id' => auth()->id(),
         ];
 
-        if ($pemeriksaan) {
-            $pemeriksaan->update($data);
-        } else {
-            $data['warga_id'] = $request->warga_id;
-            $data['sesi_posyandu_id'] = $request->sesi_posyandu_id;
-            $data['tipe_kohort'] = $request->tipe_kohort;
-            $pemeriksaan = Pemeriksaan::create($data);
-        }
-
-        // Calculate and save Z-Score for Balita
-        if ($request->tipe_kohort === 'balita') {
-            $warga = \App\Models\Warga::with(['balita'])->find($request->warga_id);
-            $sesi = \App\Models\SesiPosyandu::find($request->sesi_posyandu_id);
-
-            if ($warga && $warga->balita && $sesi && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
-                $dob = \Carbon\Carbon::parse($warga->tanggal_lahir);
-                $sessionDate = \Carbon\Carbon::parse($sesi->tanggal);
-                $ageInMonths = (int) $dob->diffInMonths($sessionDate);
-                $gender = $warga->jenis_kelamin;
-
-                $zscoreService = new \App\Services\WhoZscoreService();
-                
-                $zBbu = $zscoreService->calculate('BBU', $pemeriksaan->berat_badan, $ageInMonths, $gender);
-                $zTbu = $zscoreService->calculate('TBU', $pemeriksaan->tinggi_badan, $ageInMonths, $gender);
-                
-                \App\Models\KalkulasiZScore::updateOrCreate(
-                    ['pemeriksaan_id' => $pemeriksaan->id],
-                    [
-                        'zscore_bb_u' => $zBbu,
-                        'zscore_tb_u' => $zTbu,
-                        'status_gizi' => $zscoreService->getStatusBBU($zBbu),
-                        'status_stunting' => $zscoreService->getStatusTBU($zTbu),
-                    ]
-                );
+        DB::beginTransaction();
+        try {
+            if ($pemeriksaan) {
+                $pemeriksaan->update($data);
+            } else {
+                $data['warga_id'] = $request->warga_id;
+                $data['sesi_posyandu_id'] = $request->sesi_posyandu_id;
+                $data['tipe_kohort'] = $request->tipe_kohort;
+                $pemeriksaan = Pemeriksaan::create($data);
             }
-        }
 
-        return redirect()->back()->with('success', 'Data pemeriksaan berhasil disimpan!');
+            // Calculate and save Z-Score and EWS for Balita
+            if ($request->tipe_kohort === 'balita') {
+                $warga = Warga::with(['balita'])->find($request->warga_id);
+                $sesi = SesiPosyandu::find($request->sesi_posyandu_id);
+
+                if ($warga && $warga->balita && $sesi && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
+                    $dob = $warga->tanggal_lahir;
+                    $sessionDate = $sesi->tanggal;
+                    $gender = $warga->jenis_kelamin;
+                    $posisiUkur = $request->input('posisi_ukur', 'terlentang');
+
+                    $zscoreService = app(WhoZscoreService::class);
+
+                    $bbuRes = $zscoreService->calculateBBU($pemeriksaan->berat_badan, $dob, $sessionDate, $gender);
+                    $tbuRes = $zscoreService->calculateTBU($pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
+                    $bbtbRes = $zscoreService->calculateBBTB($pemeriksaan->berat_badan, $pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
+
+                    $zBbu = $bbuRes['zscore'];
+                    $zTbu = $tbuRes['zscore'];
+                    $zBbTb = $bbtbRes['zscore'];
+
+                    // EWS Evaluation
+                    $ewsResult = $zscoreService->evaluateEWS($warga, $zBbu, $zTbu, $pemeriksaan->berat_badan);
+
+                    KalkulasiZScore::updateOrCreate(
+                        ['pemeriksaan_id' => $pemeriksaan->id],
+                        [
+                            'zscore_bb_u' => $zBbu,
+                            'raw_zscore_bb_u' => $bbuRes['raw_zscore'] ?? null,
+                            'flag_bb_u' => $bbuRes['flag'] ?? null,
+                            'zscore_tb_u' => $zTbu,
+                            'raw_zscore_tb_u' => $tbuRes['raw_zscore'] ?? null,
+                            'flag_tb_u' => $tbuRes['flag'] ?? null,
+                            'zscore_bb_tb' => $zBbTb,
+                            'raw_zscore_bb_tb' => $bbtbRes['raw_zscore'] ?? null,
+                            'flag_bb_tb' => $bbtbRes['flag'] ?? null,
+                            'status_gizi' => $bbuRes['status'],
+                            'status_stunting' => $tbuRes['status'],
+                            'status_bb_tb' => $bbtbRes['status'],
+                            'age_in_days' => $bbuRes['age_in_days'] ?? $tbuRes['age_in_days'],
+                            'measurement_type' => $tbuRes['measurement_type'] ?? 'LENGTH',
+                            'source_version' => 'who_anthro_v1.1.0',
+                            'ews_status' => $ewsResult['status'],
+                            'ews_message' => $ewsResult['message'],
+                        ]
+                    );
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Data pemeriksaan berhasil disimpan!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Bidan Pemeriksaan Error: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan pemeriksaan: ' . $e->getMessage());
+        }
     }
 }

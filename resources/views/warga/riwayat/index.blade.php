@@ -93,13 +93,75 @@
                                 @endif
                             </div>
 
-                            @if($pemeriksaan->status_gizi)
-                            <div class="mt-2.5">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider
-                                    {{ $pemeriksaan->status_gizi == 'normal' ? 'bg-emerald-100 text-emerald-700' : ($pemeriksaan->status_gizi == 'kurang' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700') }}">
-                                    {{ $pemeriksaan->status_gizi == 'normal' ? '✅' : ($pemeriksaan->status_gizi == 'kurang' ? '⚠️' : '🔴') }}
-                                    Gizi {{ ucfirst($pemeriksaan->status_gizi) }}
+                            @php
+                                $badges = [];
+                                
+                                if ($pemeriksaan->kalkulasiZscore) {
+                                    $statuses = [
+                                        'BB/U' => $pemeriksaan->kalkulasiZscore->status_gizi,
+                                        'TB/U' => $pemeriksaan->kalkulasiZscore->status_stunting,
+                                        'BB/TB' => $pemeriksaan->kalkulasiZscore->status_bb_tb,
+                                    ];
+                                    
+                                    foreach ($statuses as $label => $status) {
+                                        if (!$status || $status === '-') continue;
+                                        
+                                        if ($status === 'out_of_reference_range') {
+                                            $badges[] = [
+                                                'display' => "$label: N/A",
+                                                'color' => 'bg-slate-100 text-slate-700',
+                                                'icon' => '❔'
+                                            ];
+                                        } else {
+                                            // Mapping based on exact string from WhoZscoreService
+                                            $isNormal = in_array($status, ['Normal', 'Gizi Baik (Normal)', 'Tinggi']);
+                                            $isKurang = in_array($status, ['Kurang (Underweight)', 'Pendek (Stunted)', 'Gizi Kurang (Wasted)', 'Berisiko Gizi Lebih']);
+                                            
+                                            $color = $isNormal ? 'bg-emerald-100 text-emerald-700' : ($isKurang ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700');
+                                            $icon = $isNormal ? '✅' : ($isKurang ? '⚠️' : '🔴');
+                                            
+                                            $badges[] = [
+                                                'display' => "$label: $status",
+                                                'color' => $color,
+                                                'icon' => $icon
+                                            ];
+                                        }
+                                    }
+                                } else {
+                                    // Legacy / Fallback
+                                    $statusGizi = $pemeriksaan->status_gizi;
+                                    if ($statusGizi) {
+                                        if ($statusGizi === 'out_of_reference_range') {
+                                            $badges[] = [
+                                                'display' => 'Di Luar Referensi (N/A)',
+                                                'color' => 'bg-slate-100 text-slate-700',
+                                                'icon' => '❔'
+                                            ];
+                                        } else {
+                                            $lowerStatus = strtolower($statusGizi);
+                                            $isNormal = in_array($lowerStatus, ['normal', 'gizi baik (normal)']);
+                                            $isKurang = in_array($lowerStatus, ['kurang', 'gizi kurang', 'kurang (underweight)']);
+                                            
+                                            $color = $isNormal ? 'bg-emerald-100 text-emerald-700' : ($isKurang ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700');
+                                            $icon = $isNormal ? '✅' : ($isKurang ? '⚠️' : '🔴');
+                                            
+                                            $badges[] = [
+                                                'display' => 'Gizi ' . ucfirst($statusGizi),
+                                                'color' => $color,
+                                                'icon' => $icon
+                                            ];
+                                        }
+                                    }
+                                }
+                            @endphp
+
+                            @if(count($badges) > 0)
+                            <div class="mt-2.5 flex flex-wrap gap-1.5">
+                                @foreach($badges as $badge)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider {{ $badge['color'] }}">
+                                    {{ $badge['icon'] }} {{ $badge['display'] }}
                                 </span>
+                                @endforeach
                             </div>
                             @endif
 
