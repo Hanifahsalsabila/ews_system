@@ -97,7 +97,7 @@ class WargaController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success', 'Data Warga berhasil didaftarkan.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
             return redirect()->back()->withErrors(['error' => 'Gagal menyimpan data: '.$e->getMessage()])->withInput();
@@ -160,7 +160,7 @@ class WargaController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success', 'Data Warga berhasil diperbarui.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
             return redirect()->back()->withErrors(['error' => 'Gagal memperbarui data: '.$e->getMessage()])->withInput();
@@ -216,7 +216,7 @@ class WargaController extends Controller
             DB::commit();
 
             return redirect()->back()->with('success', $message);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
             return redirect()->back()->withErrors(['error' => 'Gagal membuat akun: '.$e->getMessage()]);

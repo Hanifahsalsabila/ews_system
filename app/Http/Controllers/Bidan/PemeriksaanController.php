@@ -224,7 +224,7 @@ class PemeriksaanController extends Controller
 
             DB::commit();
             return redirect()->back()->with('success', 'Data pemeriksaan berhasil disimpan!');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Bidan Pemeriksaan Error: ' . $e->getMessage());
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan pemeriksaan: ' . $e->getMessage());

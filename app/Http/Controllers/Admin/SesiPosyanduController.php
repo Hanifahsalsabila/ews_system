@@ -164,7 +164,7 @@ class SesiPosyanduController extends Controller
             DB::commit();
 
             return response()->json(['message' => 'Data berhasil disimpan dan divalidasi.', 'data' => $pemeriksaan]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
 
             return response()->json(['message' => 'Gagal menyimpan: '.$e->getMessage()], 500);

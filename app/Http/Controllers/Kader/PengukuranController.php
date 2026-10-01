@@ -169,7 +169,7 @@ class PengukuranController extends Controller
 
             DB::commit();
             return redirect()->route('kader.pengukuran.index')->with('success', 'Data pengukuran awal '.$warga->nama.' berhasil disimpan dan masuk ke antrean Bidan.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Kader Pengukuran Error: ' . $e->getMessage());
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memproses data pengukuran: ' . $e->getMessage());
