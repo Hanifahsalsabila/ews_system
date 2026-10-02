@@ -159,7 +159,7 @@ class WhoZscoreLmsSeeder extends Seeder
             }
 
             // 5. WFL (Weight-for-Length) Boys
-            $path = storage_path('app/who_data/wfl_boys_0-to-2-years_zscores.csv');
+            $path = database_path('data/who/legacy/wfl_boys_0-to-2-years_zscores.csv');
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach (array_slice($lines, 1) as $line) {
                 $row = str_getcsv($line);
@@ -179,7 +179,7 @@ class WhoZscoreLmsSeeder extends Seeder
             }
 
             // WFL (Weight-for-Length) Girls
-            $path = storage_path('app/who_data/wfl_girls_0-to-2-years_zscores.csv');
+            $path = database_path('data/who/legacy/wfl_girls_0-to-2-years_zscores.csv');
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach (array_slice($lines, 1) as $line) {
                 $row = str_getcsv($line);
@@ -199,7 +199,7 @@ class WhoZscoreLmsSeeder extends Seeder
             }
 
             // 6. WFH (Weight-for-Height) Boys
-            $path = storage_path('app/who_data/wfh_boys_2-to-5-years_zscores.csv');
+            $path = database_path('data/who/legacy/wfh_boys_2-to-5-years_zscores.csv');
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach (array_slice($lines, 1) as $line) {
                 $row = str_getcsv($line);
@@ -221,7 +221,7 @@ class WhoZscoreLmsSeeder extends Seeder
             }
 
             // WFH (Weight-for-Height) Girls
-            $path = storage_path('app/who_data/wfh_girls_2-to-5-years_zscores.csv');
+            $path = database_path('data/who/legacy/wfh_girls_2-to-5-years_zscores.csv');
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach (array_slice($lines, 1) as $line) {
                 $row = str_getcsv($line);
