@@ -9,3 +9,4 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+database/data/who/anthro/v1.1.0/*.txt -text
