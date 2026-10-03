@@ -55,10 +55,12 @@ class DashboardController extends Controller
                 ->whereYear('created_at', $month->year)->count();
         }
 
-        // EWS Alerts
         $ewsAlerts = KalkulasiZscore::with('pemeriksaan.warga')
+            ->whereHas('pemeriksaan', function ($q) {
+                $q->where('is_validated', true);
+            })
             ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
-            ->orderByRaw("FIELD(ews_status, 'bahaya', 'risiko_tinggi', 'waspada')")
+            ->orderByRaw("CASE ews_status WHEN 'bahaya' THEN 1 WHEN 'risiko_tinggi' THEN 2 WHEN 'waspada' THEN 3 END")
             ->orderByDesc('created_at')
             ->take(10)
             ->get();

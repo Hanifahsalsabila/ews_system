@@ -57,11 +57,11 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'ibu_hamil')->latest()->take(3);
         }])->get();
 
-        // Get list of warga_ids already examined today
-        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+        // Get list of warga_ids already examined in the active session
+        $sudahDiperiksa = $sesiAktif ? Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
             ->where('tipe_kohort', 'ibu_hamil')
             ->where('is_validated', true)
-            ->pluck('warga_id');
+            ->pluck('warga_id') : [];
 
         return view('bidan.pemeriksaan.ibu_hamil', compact('ibuHamil', 'sesiAktif', 'sudahDiperiksa'));
     }
@@ -74,10 +74,10 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'balita')->latest()->take(3);
         }])->get();
 
-        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+        $sudahDiperiksa = $sesiAktif ? Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
             ->where('tipe_kohort', 'balita')
             ->where('is_validated', true)
-            ->pluck('warga_id');
+            ->pluck('warga_id') : [];
 
         return view('bidan.pemeriksaan.balita', compact('balita', 'sesiAktif', 'sudahDiperiksa'));
     }
@@ -90,10 +90,10 @@ class PemeriksaanController extends Controller
             $q->where('tipe_kohort', 'lansia')->latest()->take(3);
         }])->get();
 
-        $sudahDiperiksa = Pemeriksaan::whereDate('created_at', today())
+        $sudahDiperiksa = $sesiAktif ? Pemeriksaan::where('sesi_posyandu_id', $sesiAktif->id)
             ->where('tipe_kohort', 'lansia')
             ->where('is_validated', true)
-            ->pluck('warga_id');
+            ->pluck('warga_id') : [];
 
         return view('bidan.pemeriksaan.lansia', compact('lansia', 'sesiAktif', 'sudahDiperiksa'));
     }
