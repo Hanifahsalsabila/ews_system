@@ -81,6 +81,8 @@ Route::middleware(['auth', 'role:Puskesmas'])->prefix('bidan')->name('bidan.')->
     Route::get('pemeriksaan/ibu-hamil', [PemeriksaanController::class, 'ibuHamil'])->name('pemeriksaan.ibu-hamil');
     Route::get('pemeriksaan/balita', [PemeriksaanController::class, 'balita'])->name('pemeriksaan.balita');
     Route::get('pemeriksaan/lansia', [PemeriksaanController::class, 'lansia'])->name('pemeriksaan.lansia');
+    Route::get('pemeriksaan/tindak-lanjut/{pemeriksaan}', [PemeriksaanController::class, 'editTindakLanjut'])->name('pemeriksaan.tindak-lanjut');
+    Route::patch('pemeriksaan/tindak-lanjut/{pemeriksaan}', [PemeriksaanController::class, 'updateTindakLanjut'])->name('pemeriksaan.tindak-lanjut.update');
     Route::resource('pemeriksaan', PemeriksaanController::class);
 
     // KMS & Stunting

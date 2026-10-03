@@ -147,7 +147,7 @@
                                             <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ $alert->ews_message }}</p>
                                         </td>
                                         <td class="px-6 py-4 text-right">
-                                            <a href="{{ route('bidan.pemeriksaan.balita') }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white transition-all bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 shadow-sm">
+                                            <a href="{{ route('bidan.pemeriksaan.tindak-lanjut', $alert->pemeriksaan->id) }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white transition-all bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 shadow-sm">
                                                 Tindak Lanjut
                                             </a>
                                         </td>

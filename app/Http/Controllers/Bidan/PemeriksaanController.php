@@ -230,4 +230,43 @@ class PemeriksaanController extends Controller
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menyimpan pemeriksaan: ' . $e->getMessage());
         }
     }
+    public function editTindakLanjut(Pemeriksaan $pemeriksaan)
+    {
+        // Authorization check: Bidan can only see validated examinations from active sessions (or any session, but it must be valid)
+        // Here we just ensure it's validated and the bidan is logged in.
+        if (!$pemeriksaan->is_validated) {
+            abort(403, 'Pemeriksaan belum divalidasi.');
+        }
+
+        $pemeriksaan->load(['warga.balita', 'kalkulasiZscore']);
+
+        return view('bidan.pemeriksaan.tindak_lanjut', compact('pemeriksaan'));
+    }
+
+    public function updateTindakLanjut(Request $request, Pemeriksaan $pemeriksaan)
+    {
+        if (!$pemeriksaan->is_validated) {
+            abort(403, 'Pemeriksaan belum divalidasi.');
+        }
+
+        $request->validate([
+            'tindakan' => 'nullable|string',
+            'catatan' => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $pemeriksaan->update([
+                'tindakan' => $request->tindakan,
+                'catatan' => $request->catatan,
+            ]);
+            DB::commit();
+
+            return redirect()->route('bidan.dashboard')->with('success', 'Tindak lanjut berhasil disimpan.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Bidan Tindak Lanjut Error: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
 }
