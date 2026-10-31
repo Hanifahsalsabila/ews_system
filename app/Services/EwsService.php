@@ -217,6 +217,7 @@ class EwsService
             'history' => $history,
             'priority_score' => $priorityData['score'],
             'priority_details' => $priorityData['details'],
+            'is_alert' => in_array($status, ['bahaya', 'risiko_tinggi', 'waspada']),
             'alert_status' => in_array($status, ['bahaya', 'risiko_tinggi', 'waspada']) ? 'pending' : 'resolved',
         ];
     }
@@ -383,6 +384,7 @@ class EwsService
 
     /**
      * Resolusi Alert EWS ketika Bidan mencatat tindak lanjut medis.
+     * Status 'resolved' hanya boleh ditetapkan melalui proses tindak lanjut yang sah.
      */
     public function resolveAlert(Pemeriksaan $pemeriksaan, ?string $tindakan, ?string $catatan, int $userId): bool
     {
@@ -400,5 +402,114 @@ class EwsService
         }
 
         return true;
+    }
+
+    /**
+     * Tentukan status siklus alert EWS dengan menjaga integritas riwayat dan audit trail.
+     *
+     * Aturan Transisi Mesin Status Alert:
+     * 1. Jika alert sudah diselesaikan secara sah oleh Bidan (resolved_by !== null atau resolved_at !== null):
+     *    - Status 'resolved' dan jejak audit trail (resolved_at, resolved_by) TIDAK BOLEH dihapus/diubah oleh evaluasi ulang.
+     * 2. Jika alert sedang dalam penanganan Bidan ('in_progress'):
+     *    - Status 'in_progress' HARUS DIPERTAHANKAN apapun hasil evaluasi barunya.
+     * 3. Jika alert berstatus 'pending':
+     *    - Evaluasi yang berubah menjadi 'normal' atau 'data_tidak_lengkap' TIDAK BOLEH menyelesaikan alert secara otomatis.
+     *    - Alert tetap 'pending' sampai ditindaklanjuti secara sah oleh Bidan.
+     * 4. Jika record baru (belum ada data sebelumnya):
+     *    - Jika berisiko ('bahaya', 'risiko_tinggi', 'waspada') => 'pending'.
+     *    - Jika tidak berisiko ('normal', 'data_tidak_lengkap') => 'resolved' (tanpa resolved_by/at).
+     * 5. Jika record lama non-risiko ('resolved' tanpa tindakan bidan / resolved_by is null) dan berubah menjadi berisiko:
+     *    - Transisi menjadi 'pending' untuk memicu perhatian klinis Bidan.
+     *
+     * @param KalkulasiZScore|null $existing
+     * @param string $newEwsStatus
+     * @return array
+     */
+    public function determineAlertLifecycle(?KalkulasiZScore $existing, string $newEwsStatus): array
+    {
+        $isRisk = in_array($newEwsStatus, ['bahaya', 'risiko_tinggi', 'waspada']);
+
+        // 1. Pemeriksaan baru (belum ada kalkulasi zscore sebelumnya)
+        if (! $existing) {
+            return [
+                'alert_status' => $isRisk ? 'pending' : 'resolved',
+                'resolved_at' => null,
+                'resolved_by' => null,
+            ];
+        }
+
+        // 2. Alert sudah diselesaikan oleh Bidan secara sah (Audit trail tercatat)
+        if ($existing->alert_status === 'resolved' && ($existing->resolved_by !== null || $existing->resolved_at !== null)) {
+            return [
+                'alert_status' => 'resolved',
+                'resolved_at' => $existing->resolved_at,
+                'resolved_by' => $existing->resolved_by,
+            ];
+        }
+
+        // 3. Alert sedang dalam proses tindak lanjut oleh Bidan (in_progress)
+        if ($existing->alert_status === 'in_progress') {
+            return [
+                'alert_status' => 'in_progress',
+                'resolved_at' => $existing->resolved_at,
+                'resolved_by' => $existing->resolved_by,
+            ];
+        }
+
+        // 4. Alert sedang menunggu tindakan Bidan (pending)
+        if ($existing->alert_status === 'pending') {
+            // Jangan pernah otomatis me-resolve alert pending saat evaluasi menjadi normal atau data_tidak_lengkap
+            return [
+                'alert_status' => 'pending',
+                'resolved_at' => null,
+                'resolved_by' => null,
+            ];
+        }
+
+        // 5. Record lama awalnya non-risiko tanpa intervensi bidan (resolved_by null), lalu berubah berisiko
+        if ($isRisk) {
+            return [
+                'alert_status' => 'pending',
+                'resolved_at' => null,
+                'resolved_by' => null,
+            ];
+        }
+
+        // Tetap non-alert resolved
+        return [
+            'alert_status' => 'resolved',
+            'resolved_at' => null,
+            'resolved_by' => null,
+        ];
+    }
+
+    /**
+     * Sinkronisasi data KalkulasiZScore dan Alert Lifecycle untuk suatu Pemeriksaan.
+     *
+     * @param Pemeriksaan $pemeriksaan
+     * @param array $payload Data kalkulasi Z-Score (zscore_bb_u, raw, flag, status, dll.)
+     * @param array $ewsResult Hasil dari evaluate()
+     * @return KalkulasiZScore
+     */
+    public function syncKalkulasiZScore(Pemeriksaan $pemeriksaan, array $payload, array $ewsResult): KalkulasiZScore
+    {
+        $existing = KalkulasiZScore::where('pemeriksaan_id', $pemeriksaan->id)->first();
+        $lifecycle = $this->determineAlertLifecycle($existing, $ewsResult['status']);
+
+        $mergedData = array_merge($payload, [
+            'pemeriksaan_id' => $pemeriksaan->id,
+            'ews_status' => $ewsResult['status'],
+            'ews_message' => $ewsResult['message'],
+            'priority_score' => $ewsResult['priority_score'],
+            'priority_details' => $ewsResult['priority_details'],
+            'alert_status' => $lifecycle['alert_status'],
+            'resolved_at' => $lifecycle['resolved_at'],
+            'resolved_by' => $lifecycle['resolved_by'],
+        ]);
+
+        return KalkulasiZScore::updateOrCreate(
+            ['pemeriksaan_id' => $pemeriksaan->id],
+            $mergedData
+        );
     }
 }

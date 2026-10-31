@@ -148,31 +148,25 @@ class PengukuranController extends Controller
                         $sessionDate
                     );
 
-                    KalkulasiZScore::updateOrCreate(
-                        ['pemeriksaan_id' => $pemeriksaan->id],
-                        [
-                            'zscore_bb_u' => $zBbu,
-                            'raw_zscore_bb_u' => $bbuRes['raw_zscore'] ?? null,
-                            'flag_bb_u' => $bbuRes['flag'] ?? null,
-                            'zscore_tb_u' => $zTbu,
-                            'raw_zscore_tb_u' => $tbuRes['raw_zscore'] ?? null,
-                            'flag_tb_u' => $tbuRes['flag'] ?? null,
-                            'zscore_bb_tb' => $zBbTb,
-                            'raw_zscore_bb_tb' => $bbtbRes['raw_zscore'] ?? null,
-                            'flag_bb_tb' => $bbtbRes['flag'] ?? null,
-                            'status_gizi' => $bbuRes['status'],
-                            'status_stunting' => $tbuRes['status'],
-                            'status_bb_tb' => $bbtbRes['status'],
-                            'age_in_days' => $bbuRes['age_in_days'] ?? $tbuRes['age_in_days'],
-                            'measurement_type' => $tbuRes['measurement_type'] ?? 'LENGTH',
-                            'source_version' => 'who_anthro_v1.1.0',
-                            'ews_status' => $ewsResult['status'],
-                            'ews_message' => $ewsResult['message'],
-                            'priority_score' => $ewsResult['priority_score'],
-                            'priority_details' => $ewsResult['priority_details'],
-                            'alert_status' => $ewsResult['alert_status'],
-                        ]
-                    );
+                    $kalkulasiPayload = [
+                        'zscore_bb_u' => $zBbu,
+                        'raw_zscore_bb_u' => $bbuRes['raw_zscore'] ?? null,
+                        'flag_bb_u' => $bbuRes['flag'] ?? null,
+                        'zscore_tb_u' => $zTbu,
+                        'raw_zscore_tb_u' => $tbuRes['raw_zscore'] ?? null,
+                        'flag_tb_u' => $tbuRes['flag'] ?? null,
+                        'zscore_bb_tb' => $zBbTb,
+                        'raw_zscore_bb_tb' => $bbtbRes['raw_zscore'] ?? null,
+                        'flag_bb_tb' => $bbtbRes['flag'] ?? null,
+                        'status_gizi' => $bbuRes['status'],
+                        'status_stunting' => $tbuRes['status'],
+                        'status_bb_tb' => $bbtbRes['status'],
+                        'age_in_days' => $bbuRes['age_in_days'] ?? $tbuRes['age_in_days'],
+                        'measurement_type' => $tbuRes['measurement_type'] ?? 'LENGTH',
+                        'source_version' => 'who_anthro_v1.1.0',
+                    ];
+
+                    $ewsService->syncKalkulasiZScore($pemeriksaan, $kalkulasiPayload, $ewsResult);
 
                     if (in_array($ewsResult['status'], ['risiko_tinggi', 'bahaya'])) {
                         $ewsService->triggerKunjunganRumah($wargaWithBalita, $ewsResult, auth()->id());

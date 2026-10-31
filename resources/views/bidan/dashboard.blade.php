@@ -166,6 +166,10 @@
                                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
                                                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Data Tidak Lengkap
                                                     </span>
+                                                @elseif($alert->ews_status == 'normal')
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Normal
+                                                    </span>
                                                 @else
                                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
                                                         <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Waspada (Kuning)

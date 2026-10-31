@@ -60,24 +60,28 @@ class DashboardController extends Controller
         $alertsQuery = KalkulasiZscore::with(['pemeriksaan.warga', 'resolvedBy'])
             ->whereHas('pemeriksaan', function ($q) {
                 $q->where('is_validated', true);
-            })
-            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya']);
+            });
 
         if ($alertFilter === 'active') {
             $alertsQuery->whereIn('alert_status', ['pending', 'in_progress']);
         } elseif ($alertFilter === 'resolved') {
-            $alertsQuery->where('alert_status', 'resolved');
+            $alertsQuery->where('alert_status', 'resolved')
+                ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya']);
+        } else {
+            $alertsQuery->where(function ($q) {
+                $q->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
+                  ->orWhereIn('alert_status', ['pending', 'in_progress']);
+            });
         }
 
         $ewsAlerts = $alertsQuery
-            ->orderByRaw("CASE ews_status WHEN 'bahaya' THEN 1 WHEN 'risiko_tinggi' THEN 2 WHEN 'waspada' THEN 3 END")
+            ->orderByRaw("CASE ews_status WHEN 'bahaya' THEN 1 WHEN 'risiko_tinggi' THEN 2 WHEN 'waspada' THEN 3 WHEN 'data_tidak_lengkap' THEN 4 ELSE 5 END")
             ->orderByDesc('priority_score')
             ->orderByDesc('created_at')
             ->take(15)
             ->get();
 
         $activeAlertsCount = KalkulasiZscore::whereHas('pemeriksaan', fn($q) => $q->where('is_validated', true))
-            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
             ->whereIn('alert_status', ['pending', 'in_progress'])
             ->count();
 
