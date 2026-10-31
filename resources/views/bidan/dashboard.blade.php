@@ -96,13 +96,26 @@
 
             <!-- Priority Alert Matrix (EWS) -->
             <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
-                <div class="p-6 lg:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="p-6 lg:p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
                     <div>
                         <h3 class="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                             <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                             Priority Alert Decision Matrix (EWS)
                         </h3>
                         <p class="text-sm text-slate-500 font-medium mt-1">Daftar balita berisiko yang memerlukan tindakan klinis atau rujukan segera berdasarkan Z-Score WHO.</p>
+                    </div>
+
+                    <!-- Filter Tabs: Lifecycle Alert EWS -->
+                    <div class="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl text-xs font-bold">
+                        <a href="{{ route('bidan.dashboard', ['alert_filter' => 'active']) }}" class="px-3.5 py-1.5 rounded-xl transition-all {{ ($alertFilter ?? 'active') === 'active' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                            Aktif ({{ $activeAlertsCount ?? 0 }})
+                        </a>
+                        <a href="{{ route('bidan.dashboard', ['alert_filter' => 'resolved']) }}" class="px-3.5 py-1.5 rounded-xl transition-all {{ ($alertFilter ?? 'active') === 'resolved' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                            Selesai ({{ $resolvedAlertsCount ?? 0 }})
+                        </a>
+                        <a href="{{ route('bidan.dashboard', ['alert_filter' => 'all']) }}" class="px-3.5 py-1.5 rounded-xl transition-all {{ ($alertFilter ?? 'active') === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
+                            Semua
+                        </a>
                     </div>
                 </div>
                 <div class="p-0">
@@ -111,9 +124,10 @@
                             <thead>
                                 <tr class="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider font-bold border-b border-slate-100">
                                     <th class="px-6 py-4">Nama Balita</th>
-                                    <th class="px-6 py-4">Tingkat Risiko</th>
-                                    <th class="px-6 py-4">Status Z-Score</th>
-                                    <th class="px-6 py-4 w-1/3">Rekomendasi / Pesan EWS</th>
+                                    <th class="px-6 py-4">Kategori & Prioritas</th>
+                                    <th class="px-6 py-4">Status Z-Score (WHO)</th>
+                                    <th class="px-6 py-4">Status Siklus</th>
+                                    <th class="px-6 py-4 w-1/4">Rekomendasi / Pesan EWS</th>
                                     <th class="px-6 py-4 text-right">Aksi</th>
                                 </tr>
                             </thead>
@@ -125,41 +139,67 @@
                                             <div class="text-xs text-slate-500 mt-0.5">NIK: {{ $alert->pemeriksaan->warga->nik }}</div>
                                         </td>
                                         <td class="px-6 py-4">
-                                            @if($alert->ews_status == 'bahaya')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> Bahaya (Merah)
+                                            <div class="space-y-1.5">
+                                                @if($alert->ews_status == 'bahaya')
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span> Bahaya (Merah)
+                                                    </span>
+                                                @elseif($alert->ews_status == 'risiko_tinggi')
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Risiko Tinggi (Oranye)
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Waspada (Kuning)
+                                                    </span>
+                                                @endif
+
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                        Skor: {{ number_format((float) ($alert->priority_score ?? 0), 1) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-xs font-bold text-slate-700 space-y-0.5">
+                                                <div>WAZ (BB/U): <span class="{{ ($alert->zscore_bb_u ?? 0) < -2 ? 'text-rose-600' : 'text-slate-800' }}">{{ is_null($alert->zscore_bb_u) ? 'N/A' : number_format((float)$alert->zscore_bb_u, 2) }}</span></div>
+                                                <div>HAZ (TB/U): <span class="{{ ($alert->zscore_tb_u ?? 0) < -2 ? 'text-rose-600' : 'text-slate-800' }}">{{ is_null($alert->zscore_tb_u) ? 'N/A' : number_format((float)$alert->zscore_tb_u, 2) }}</span></div>
+                                                <div>WHZ (BB/TB): <span class="{{ ($alert->zscore_bb_tb ?? 0) < -2 ? 'text-rose-600' : 'text-slate-800' }}">{{ is_null($alert->zscore_bb_tb) ? 'N/A' : number_format((float)$alert->zscore_bb_tb, 2) }}</span></div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @if(($alert->alert_status ?? 'pending') === 'resolved')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                    ✓ Ditangani
                                                 </span>
-                                            @elseif($alert->ews_status == 'risiko_tinggi')
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 border border-orange-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Risiko Tinggi (Oranye)
+                                            @elseif(($alert->alert_status ?? 'pending') === 'in_progress')
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                                    ⏳ Proses
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Waspada (Kuning)
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                    ● Menunggu
                                                 </span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="text-sm font-semibold text-slate-700">BBU: {{ is_null($alert->zscore_bb_u) ? 'N/A' : number_format((float)$alert->zscore_bb_u, 2) }}</div>
-                                            <div class="text-xs text-slate-500">{{ $alert->status_gizi }}</div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <p class="text-sm text-slate-600 font-medium leading-relaxed">{{ $alert->ews_message }}</p>
+                                            <p class="text-xs text-slate-600 font-medium leading-relaxed">{{ $alert->ews_message }}</p>
                                         </td>
                                         <td class="px-6 py-4 text-right">
                                             <a href="{{ route('bidan.pemeriksaan.tindak-lanjut', $alert->pemeriksaan->id) }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white transition-all bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 shadow-sm">
-                                                Tindak Lanjut
+                                                {{ ($alert->alert_status ?? 'pending') === 'resolved' ? 'Lihat Tindakan' : 'Tindak Lanjut' }}
                                             </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-12 text-center">
+                                        <td colspan="6" class="px-6 py-12 text-center">
                                             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mb-4">
                                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                             </div>
                                             <h3 class="text-lg font-bold text-slate-800">Tidak ada Peringatan EWS</h3>
-                                            <p class="text-sm text-slate-500 mt-1">Semua data pertumbuhan balita terpantau normal.</p>
+                                            <p class="text-sm text-slate-500 mt-1">Tidak ada data balita yang memerlukan penanganan darurat pada kategori ini.</p>
                                         </td>
                                     </tr>
                                 @endforelse

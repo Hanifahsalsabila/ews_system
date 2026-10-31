@@ -65,9 +65,19 @@
                                 <span class="text-sm font-medium text-rose-700">Z-Score BB/TB</span>
                                 <span class="text-sm font-bold {{ $pemeriksaan->kalkulasiZscore->zscore_bb_tb < -2 ? 'text-rose-600' : 'text-emerald-600' }}">{{ $pemeriksaan->kalkulasiZscore->zscore_bb_tb !== null ? number_format($pemeriksaan->kalkulasiZscore->zscore_bb_tb, 2) : '-' }}</span>
                             </div>
-                            <div class="pt-2">
-                                <span class="inline-flex px-3 py-1 bg-rose-200 text-rose-800 text-xs font-bold rounded-lg">{{ $pemeriksaan->kalkulasiZscore->ews_status }}</span>
-                                <p class="text-xs text-rose-600 mt-2 font-medium">{{ $pemeriksaan->kalkulasiZscore->ews_message }}</p>
+                            <div class="pt-2 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="inline-flex px-3 py-1 bg-rose-200 text-rose-800 text-xs font-bold rounded-lg uppercase">{{ $pemeriksaan->kalkulasiZscore->ews_status }}</span>
+                                    <span class="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200">
+                                        Skor Prioritas: {{ number_format((float) ($pemeriksaan->kalkulasiZscore->priority_score ?? 0), 1) }} / 100
+                                    </span>
+                                </div>
+                                <p class="text-xs text-rose-600 font-medium leading-relaxed">{{ $pemeriksaan->kalkulasiZscore->ews_message }}</p>
+                                @if(!empty($pemeriksaan->kalkulasiZscore->priority_details['summary']))
+                                    <div class="p-2.5 rounded-xl bg-white/80 border border-rose-200/60 text-[11px] text-slate-600 font-medium">
+                                        <span class="font-bold text-slate-700">Faktor Risiko Klinis:</span> {{ $pemeriksaan->kalkulasiZscore->priority_details['summary'] }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

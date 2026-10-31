@@ -27,16 +27,29 @@ class KalkulasiZScore extends Model
         'source_version',
         'ews_status',
         'ews_message',
+        'priority_score',
+        'priority_details',
+        'alert_status',
+        'resolved_at',
+        'resolved_by',
     ];
 
     protected $casts = [
         'flag_bb_u' => 'boolean',
         'flag_tb_u' => 'boolean',
         'flag_bb_tb' => 'boolean',
+        'priority_score' => 'float',
+        'priority_details' => 'array',
+        'resolved_at' => 'datetime',
     ];
 
     public function pemeriksaan()
     {
         return $this->belongsTo(Pemeriksaan::class, 'pemeriksaan_id');
+    }
+
+    public function resolvedBy()
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }

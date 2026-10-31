@@ -94,7 +94,22 @@
                                     @php $prevBB = null; @endphp
                                     @foreach($riwayatPemeriksaan as $cek)
                                         @php
-                                            $umurBln = intval(\Carbon\Carbon::parse($selectedBalita->tanggal_lahir)->diffInMonths($cek->created_at));
+                                            $tglLahir = \Carbon\Carbon::parse($selectedBalita->warga->tanggal_lahir)->startOfDay();
+                                            $tglPeriksa = \Carbon\Carbon::parse($cek->created_at)->startOfDay();
+                                            $diff = $tglLahir->diff($tglPeriksa);
+                                            
+                                            if ($diff->y >= 2) {
+                                                $umurDisplay = $diff->y . ' Tahun ' . $diff->m . ' Bulan';
+                                            } elseif ($diff->y == 1 || $diff->m >= 1) {
+                                                $totalBulan = ($diff->y * 12) + $diff->m;
+                                                $umurDisplay = $totalBulan . ' Bulan';
+                                                if ($diff->d > 0) {
+                                                    $umurDisplay .= ' ' . $diff->d . ' Hari';
+                                                }
+                                            } else {
+                                                $umurDisplay = $diff->d . ' Hari';
+                                            }
+
                                             $tren = '-';
                                             if($prevBB !== null) {
                                                 if($cek->berat_badan > $prevBB) $tren = '<span class="text-green-600 font-bold">N</span> (Naik)';
@@ -105,7 +120,7 @@
                                         @endphp
                                         <tr>
                                             <td class="px-3 py-2">{{ $cek->created_at->format('d M Y') }}</td>
-                                            <td class="px-3 py-2">{{ $umurBln }} Bulan</td>
+                                            <td class="px-3 py-2">{{ $umurDisplay }}</td>
                                             <td class="px-3 py-2">{{ $cek->berat_badan }} kg</td>
                                             <td class="px-3 py-2">{{ is_null($cek->zscore_bb_u) ? 'N/A' : number_format((float)$cek->zscore_bb_u, 2) }}</td>
                                             <td class="px-3 py-2">

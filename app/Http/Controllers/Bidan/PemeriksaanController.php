@@ -194,8 +194,18 @@ class PemeriksaanController extends Controller
                     $zTbu = $tbuRes['zscore'];
                     $zBbTb = $bbtbRes['zscore'];
 
-                    // EWS Evaluation
-                    $ewsResult = $zscoreService->evaluateEWS($warga, $zBbu, $zTbu, $pemeriksaan->berat_badan);
+                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority)
+                    $ewsService = app(\App\Services\EwsService::class);
+                    $ewsResult = $ewsService->evaluate(
+                        $warga,
+                        $zBbu,
+                        $zTbu,
+                        $zBbTb,
+                        (float) $pemeriksaan->berat_badan,
+                        $pemeriksaan->id,
+                        $dob,
+                        $sessionDate
+                    );
 
                     KalkulasiZScore::updateOrCreate(
                         ['pemeriksaan_id' => $pemeriksaan->id],
@@ -217,8 +227,15 @@ class PemeriksaanController extends Controller
                             'source_version' => 'who_anthro_v1.1.0',
                             'ews_status' => $ewsResult['status'],
                             'ews_message' => $ewsResult['message'],
+                            'priority_score' => $ewsResult['priority_score'],
+                            'priority_details' => $ewsResult['priority_details'],
+                            'alert_status' => $ewsResult['alert_status'],
                         ]
                     );
+
+                    if (in_array($ewsResult['status'], ['risiko_tinggi', 'bahaya'])) {
+                        $ewsService->triggerKunjunganRumah($warga, $ewsResult, auth()->id());
+                    }
                 }
             }
 
@@ -240,6 +257,13 @@ class PemeriksaanController extends Controller
 
         $pemeriksaan->load(['warga.balita', 'kalkulasiZscore']);
 
+        // Update alert status to in_progress if currently pending
+        if ($pemeriksaan->kalkulasiZscore && $pemeriksaan->kalkulasiZscore->alert_status === 'pending') {
+            $pemeriksaan->kalkulasiZscore->update([
+                'alert_status' => 'in_progress',
+            ]);
+        }
+
         return view('bidan.pemeriksaan.tindak_lanjut', compact('pemeriksaan'));
     }
 
@@ -256,10 +280,13 @@ class PemeriksaanController extends Controller
 
         DB::beginTransaction();
         try {
-            $pemeriksaan->update([
-                'tindakan' => $request->tindakan,
-                'catatan' => $request->catatan,
-            ]);
+            app(\App\Services\EwsService::class)->resolveAlert(
+                $pemeriksaan,
+                $request->tindakan,
+                $request->catatan,
+                auth()->id()
+            );
+
             DB::commit();
 
             return redirect()->route('bidan.dashboard')->with('success', 'Tindak lanjut berhasil disimpan.');

@@ -135,8 +135,18 @@ class PengukuranController extends Controller
                     $zTbu = $tbuRes['zscore'];
                     $zBbTb = $bbtbRes['zscore'];
 
-                    // EWS Evaluation
-                    $ewsResult = $zscoreService->evaluateEWS($warga, $zBbu, $zTbu, $pemeriksaan->berat_badan);
+                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority)
+                    $ewsService = app(\App\Services\EwsService::class);
+                    $ewsResult = $ewsService->evaluate(
+                        $wargaWithBalita,
+                        $zBbu,
+                        $zTbu,
+                        $zBbTb,
+                        (float) $pemeriksaan->berat_badan,
+                        $pemeriksaan->id,
+                        $dob,
+                        $sessionDate
+                    );
 
                     KalkulasiZScore::updateOrCreate(
                         ['pemeriksaan_id' => $pemeriksaan->id],
@@ -158,11 +168,14 @@ class PengukuranController extends Controller
                             'source_version' => 'who_anthro_v1.1.0',
                             'ews_status' => $ewsResult['status'],
                             'ews_message' => $ewsResult['message'],
+                            'priority_score' => $ewsResult['priority_score'],
+                            'priority_details' => $ewsResult['priority_details'],
+                            'alert_status' => $ewsResult['alert_status'],
                         ]
                     );
 
                     if (in_array($ewsResult['status'], ['risiko_tinggi', 'bahaya'])) {
-                        $this->triggerKunjunganRumahEWS($warga, $ewsResult);
+                        $ewsService->triggerKunjunganRumah($wargaWithBalita, $ewsResult, auth()->id());
                     }
                 }
             }
@@ -173,28 +186,6 @@ class PengukuranController extends Controller
             DB::rollBack();
             Log::error('Kader Pengukuran Error: ' . $e->getMessage());
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat memproses data pengukuran: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Otomatis buat entri kunjungan rumah untuk Bidan berdasarkan EWS.
-     */
-    private function triggerKunjunganRumahEWS(Warga $warga, array $ewsResult): void
-    {
-        $existingVisit = KunjunganRumah::where('warga_id', $warga->id)
-            ->whereIn('status', ['dijadwalkan', 'ditunda'])
-            ->where('tipe', '2t')
-            ->exists();
-
-        if (! $existingVisit) {
-            KunjunganRumah::create([
-                'warga_id' => $warga->id,
-                'tipe' => '2t',
-                'prioritas' => $ewsResult['status'] === 'bahaya' ? 'sangat_tinggi' : 'tinggi',
-                'tanggal_rencana' => now()->addDays(3)->toDateString(),
-                'status' => 'dijadwalkan',
-                'catatan_sebelum' => "⚠️ PERINGATAN OTOMATIS (EWS): {$ewsResult['message']} Segera lakukan kunjungan rumah untuk intervensi gizi.",
-            ]);
         }
     }
 }

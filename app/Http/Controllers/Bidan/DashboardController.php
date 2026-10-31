@@ -55,19 +55,41 @@ class DashboardController extends Controller
                 ->whereYear('created_at', $month->year)->count();
         }
 
-        $ewsAlerts = KalkulasiZscore::with('pemeriksaan.warga')
+        $alertFilter = request('alert_filter', 'active'); // 'active', 'resolved', 'all'
+
+        $alertsQuery = KalkulasiZscore::with(['pemeriksaan.warga', 'resolvedBy'])
             ->whereHas('pemeriksaan', function ($q) {
                 $q->where('is_validated', true);
             })
-            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
+            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya']);
+
+        if ($alertFilter === 'active') {
+            $alertsQuery->whereIn('alert_status', ['pending', 'in_progress']);
+        } elseif ($alertFilter === 'resolved') {
+            $alertsQuery->where('alert_status', 'resolved');
+        }
+
+        $ewsAlerts = $alertsQuery
             ->orderByRaw("CASE ews_status WHEN 'bahaya' THEN 1 WHEN 'risiko_tinggi' THEN 2 WHEN 'waspada' THEN 3 END")
+            ->orderByDesc('priority_score')
             ->orderByDesc('created_at')
-            ->take(10)
+            ->take(15)
             ->get();
+
+        $activeAlertsCount = KalkulasiZscore::whereHas('pemeriksaan', fn($q) => $q->where('is_validated', true))
+            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
+            ->whereIn('alert_status', ['pending', 'in_progress'])
+            ->count();
+
+        $resolvedAlertsCount = KalkulasiZscore::whereHas('pemeriksaan', fn($q) => $q->where('is_validated', true))
+            ->whereIn('ews_status', ['waspada', 'risiko_tinggi', 'bahaya'])
+            ->where('alert_status', 'resolved')
+            ->count();
 
         return view('bidan.dashboard', compact(
             'totalBalita', 'totalIbuHamil', 'totalLansia', 'persentaseKehadiran', 'angkaStunting',
-            'chartLabels', 'attendanceData', 'stuntingData', 'ewsAlerts'
+            'chartLabels', 'attendanceData', 'stuntingData', 'ewsAlerts',
+            'alertFilter', 'activeAlertsCount', 'resolvedAlertsCount'
         ));
     }
 }

@@ -454,52 +454,17 @@ class WhoZscoreService
 
     /**
      * Mesin Keputusan EWS untuk menentukan 4 Tingkat Risiko.
+     * Menerima indikator WAZ, HAZ, WHZ, serta ID pemeriksaan saat ini guna mencegah self-comparison.
      */
-    public function evaluateEWS(Warga $warga, $zBbu, $zTbu, $currentWeight)
+    public function evaluateEWS(Warga $warga, $zBbu, $zTbu, $currentWeight, $zBbTb = null, $currentPemeriksaanId = null)
     {
-        $pastExams = Pemeriksaan::where('warga_id', $warga->id)
-            ->whereNotNull('berat_badan')
-            ->orderByDesc('created_at')
-            ->take(3)
-            ->pluck('berat_badan')
-            ->toArray();
-
-        $history = array_merge([$currentWeight], $pastExams);
-        $history = array_slice($history, 0, 4);
-
-        $tCount = 0;
-        for ($i = 0; $i < count($history) - 1; $i++) {
-            if ($history[$i] <= $history[$i+1]) {
-                $tCount++;
-            } else {
-                break;
-            }
-        }
-
-        if (($zBbu !== null && $zBbu < -3) || ($zTbu !== null && $zTbu < -3) || $tCount >= 3) {
-            return [
-                'status' => 'bahaya',
-                'message' => "Z-Score sangat rendah (<-3 SD) atau BB tidak naik 3x (3T). Rekomendasi: Rujukan Segera ke Puskesmas."
-            ];
-        }
-
-        if (($zBbu !== null && $zBbu < -2) || ($zTbu !== null && $zTbu < -2) || $tCount == 2) {
-            return [
-                'status' => 'risiko_tinggi',
-                'message' => "Indikasi Stunting/Wasting ringan (Z-Score <-2) atau BB tidak naik 2x (2T). Rekomendasi: Otomatis Kunjungan Rumah Kader."
-            ];
-        }
-
-        if ($tCount == 1) {
-            return [
-                'status' => 'waspada',
-                'message' => "Berat Badan tidak naik 1x (1T). Rekomendasi: Edukasi Gizi dan pantau bulan depan."
-            ];
-        }
-
-        return [
-            'status' => 'normal',
-            'message' => "Pertumbuhan baik."
-        ];
+        return app(EwsService::class)->evaluate(
+            $warga,
+            $zBbu !== null ? (float) $zBbu : null,
+            $zTbu !== null ? (float) $zTbu : null,
+            $zBbTb !== null ? (float) $zBbTb : null,
+            (float) $currentWeight,
+            $currentPemeriksaanId
+        );
     }
 }
