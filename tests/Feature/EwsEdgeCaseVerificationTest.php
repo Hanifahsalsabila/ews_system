@@ -216,7 +216,7 @@ class EwsEdgeCaseVerificationTest extends TestCase
         );
 
         $this->assertIsArray($res);
-        $this->assertEquals('normal', $res['status']);
+        $this->assertEquals('data_tidak_lengkap', $res['status']);
         $this->assertEquals(0.0, $res['priority_score']);
         $this->assertEquals('resolved', $res['alert_status']);
 

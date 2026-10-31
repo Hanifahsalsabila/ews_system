@@ -453,18 +453,20 @@ class WhoZscoreService
     }
 
     /**
-     * Mesin Keputusan EWS untuk menentukan 4 Tingkat Risiko.
-     * Menerima indikator WAZ, HAZ, WHZ, serta ID pemeriksaan saat ini guna mencegah self-comparison.
+     * Mesin Keputusan EWS untuk menentukan Kategori Risiko dan Prioritas.
+     * Menerima indikator WAZ, HAZ, WHZ, tanggal lahir, dan tanggal pengukuran.
      */
-    public function evaluateEWS(Warga $warga, $zBbu, $zTbu, $currentWeight, $zBbTb = null, $currentPemeriksaanId = null)
+    public function evaluateEWS(Warga $warga, $zBbu, $zTbu, $currentWeight, $zBbTb = null, $currentPemeriksaanId = null, $dob = null, $measurementDate = null)
     {
         return app(EwsService::class)->evaluate(
             $warga,
             $zBbu !== null ? (float) $zBbu : null,
             $zTbu !== null ? (float) $zTbu : null,
             $zBbTb !== null ? (float) $zBbTb : null,
-            (float) $currentWeight,
-            $currentPemeriksaanId
+            $currentWeight !== null ? (float) $currentWeight : null,
+            $currentPemeriksaanId,
+            $dob,
+            $measurementDate
         );
     }
 }

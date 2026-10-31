@@ -119,7 +119,7 @@ class PengukuranController extends Controller
             // Calculate and save Z-Score and EWS for Balita
             if ($tipeKohort === 'balita') {
                 $wargaWithBalita = Warga::with(['balita'])->find($warga->id);
-                if ($wargaWithBalita && $wargaWithBalita->balita && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
+                if ($wargaWithBalita && $wargaWithBalita->balita && ($pemeriksaan->berat_badan || $pemeriksaan->tinggi_badan)) {
                     $dob = $wargaWithBalita->tanggal_lahir;
                     $sessionDate = $activeSession->tanggal;
                     $gender = $wargaWithBalita->jenis_kelamin;
@@ -127,22 +127,22 @@ class PengukuranController extends Controller
 
                     $zscoreService = app(WhoZscoreService::class);
 
-                    $bbuRes = $zscoreService->calculateBBU($pemeriksaan->berat_badan, $dob, $sessionDate, $gender);
-                    $tbuRes = $zscoreService->calculateTBU($pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
-                    $bbtbRes = $zscoreService->calculateBBTB($pemeriksaan->berat_badan, $pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
+                    $bbuRes = $pemeriksaan->berat_badan ? $zscoreService->calculateBBU($pemeriksaan->berat_badan, $dob, $sessionDate, $gender) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
+                    $tbuRes = $pemeriksaan->tinggi_badan ? $zscoreService->calculateTBU($pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
+                    $bbtbRes = ($pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) ? $zscoreService->calculateBBTB($pemeriksaan->berat_badan, $pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
 
                     $zBbu = $bbuRes['zscore'];
                     $zTbu = $tbuRes['zscore'];
                     $zBbTb = $bbtbRes['zscore'];
 
-                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority)
+                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority, handles incomplete data)
                     $ewsService = app(\App\Services\EwsService::class);
                     $ewsResult = $ewsService->evaluate(
                         $wargaWithBalita,
                         $zBbu,
                         $zTbu,
                         $zBbTb,
-                        (float) $pemeriksaan->berat_badan,
+                        $pemeriksaan->berat_badan !== null ? (float) $pemeriksaan->berat_badan : null,
                         $pemeriksaan->id,
                         $dob,
                         $sessionDate

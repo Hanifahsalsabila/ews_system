@@ -178,7 +178,7 @@ class PemeriksaanController extends Controller
                 $warga = Warga::with(['balita'])->find($request->warga_id);
                 $sesi = SesiPosyandu::find($request->sesi_posyandu_id);
 
-                if ($warga && $warga->balita && $sesi && $pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) {
+                if ($warga && $warga->balita && $sesi && ($pemeriksaan->berat_badan || $pemeriksaan->tinggi_badan)) {
                     $dob = $warga->tanggal_lahir;
                     $sessionDate = $sesi->tanggal;
                     $gender = $warga->jenis_kelamin;
@@ -186,22 +186,22 @@ class PemeriksaanController extends Controller
 
                     $zscoreService = app(WhoZscoreService::class);
 
-                    $bbuRes = $zscoreService->calculateBBU($pemeriksaan->berat_badan, $dob, $sessionDate, $gender);
-                    $tbuRes = $zscoreService->calculateTBU($pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
-                    $bbtbRes = $zscoreService->calculateBBTB($pemeriksaan->berat_badan, $pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur);
+                    $bbuRes = $pemeriksaan->berat_badan ? $zscoreService->calculateBBU($pemeriksaan->berat_badan, $dob, $sessionDate, $gender) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
+                    $tbuRes = $pemeriksaan->tinggi_badan ? $zscoreService->calculateTBU($pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
+                    $bbtbRes = ($pemeriksaan->berat_badan && $pemeriksaan->tinggi_badan) ? $zscoreService->calculateBBTB($pemeriksaan->berat_badan, $pemeriksaan->tinggi_badan, $dob, $sessionDate, $gender, $posisiUkur) : ['zscore' => null, 'status' => 'Data tidak lengkap', 'age_in_days' => 0];
 
                     $zBbu = $bbuRes['zscore'];
                     $zTbu = $tbuRes['zscore'];
                     $zBbTb = $bbtbRes['zscore'];
 
-                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority)
+                    // EWS Evaluation via dedicated EwsService (Includes WHZ, avoids self-comparison, computes priority, handles incomplete data)
                     $ewsService = app(\App\Services\EwsService::class);
                     $ewsResult = $ewsService->evaluate(
                         $warga,
                         $zBbu,
                         $zTbu,
                         $zBbTb,
-                        (float) $pemeriksaan->berat_badan,
+                        $pemeriksaan->berat_badan !== null ? (float) $pemeriksaan->berat_badan : null,
                         $pemeriksaan->id,
                         $dob,
                         $sessionDate

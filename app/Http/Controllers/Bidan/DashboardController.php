@@ -86,10 +86,12 @@ class DashboardController extends Controller
             ->where('alert_status', 'resolved')
             ->count();
 
+        $incompleteAlertsCount = KalkulasiZscore::where('ews_status', 'data_tidak_lengkap')->count();
+
         return view('bidan.dashboard', compact(
             'totalBalita', 'totalIbuHamil', 'totalLansia', 'persentaseKehadiran', 'angkaStunting',
             'chartLabels', 'attendanceData', 'stuntingData', 'ewsAlerts',
-            'alertFilter', 'activeAlertsCount', 'resolvedAlertsCount'
+            'alertFilter', 'activeAlertsCount', 'resolvedAlertsCount', 'incompleteAlertsCount'
         ));
     }
 }

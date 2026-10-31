@@ -379,8 +379,9 @@ class EwsComprehensiveAuditTest extends TestCase
 
         $res = $this->ewsService->evaluate($warga, null, null, null, 10.0, $pem->id);
 
-        $this->assertEquals('normal', $res['status']);
+        $this->assertEquals('data_tidak_lengkap', $res['status']);
         $this->assertEquals(0.0, $res['priority_score']);
+        $this->assertStringContainsString('DATA TIDAK LENGKAP', $res['message']);
     }
 
     /**
