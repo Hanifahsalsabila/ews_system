@@ -99,12 +99,24 @@ class PemeriksaanController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'warga_id' => 'required|exists:warga,id',
-            'sesi_posyandu_id' => 'required|exists:sesi_posyandu,id',
-            'tipe_kohort' => 'required|in:balita,ibu_hamil,lansia',
-        ]);
+{
+    $request->validate([
+        'warga_id' => 'required|exists:warga,id',
+        'sesi_posyandu_id' => 'required|exists:sesi_posyandu,id',
+        'tipe_kohort' => 'required|in:balita,ibu_hamil,lansia',
+
+        // Validasi antropometri balita
+        'berat_badan' => 'required_if:tipe_kohort,balita|nullable|numeric|min:0.1',
+        'tinggi_badan' => 'required_if:tipe_kohort,balita|nullable|numeric|min:10',
+        'lingkar_kepala' => 'nullable|numeric|gt:0',
+
+        // Validasi posisi pengukuran
+        'posisi_ukur' => [
+            'required_if:tipe_kohort,balita',
+            'nullable',
+            'in:terlentang,berdiri',
+        ],
+    ]);
 
         // Check if there's an existing record
         $pemeriksaan = Pemeriksaan::where('warga_id', $request->warga_id)
@@ -135,7 +147,7 @@ class PemeriksaanController extends Controller
         $data = [
             'berat_badan' => $request->berat_badan ?? ($pemeriksaan->berat_badan ?? null),
             'tinggi_badan' => $request->tinggi_badan ?? ($pemeriksaan->tinggi_badan ?? null),
-            'posisi_ukur' => $request->input('posisi_ukur', 'terlentang'),
+            'posisi_ukur' => $request->input('posisi_ukur',$pemeriksaan->posisi_ukur ?? null),
             'lingkar_kepala' => $request->lingkar_kepala ?? ($pemeriksaan->lingkar_kepala ?? null),
             'lingkar_lengan' => $request->lingkar_lengan ?? ($pemeriksaan->lingkar_lengan ?? null),
             'tfu' => $request->tfu ?? ($pemeriksaan->tfu ?? null),
@@ -182,7 +194,7 @@ class PemeriksaanController extends Controller
                     $dob = $warga->tanggal_lahir;
                     $sessionDate = $sesi->tanggal;
                     $gender = $warga->jenis_kelamin;
-                    $posisiUkur = $request->input('posisi_ukur', 'terlentang');
+                    $posisiUkur = $pemeriksaan->posisi_ukur;
 
                     $zscoreService = app(WhoZscoreService::class);
 
@@ -268,9 +280,9 @@ class PemeriksaanController extends Controller
         }
 
         $request->validate([
-            'tindakan' => 'nullable|string',
-            'catatan' => 'nullable|string',
-        ]);
+        'tindakan' => 'required|string|max:2000',
+        'catatan' => 'nullable|string|max:2000',
+    ]);
 
         DB::beginTransaction();
         try {

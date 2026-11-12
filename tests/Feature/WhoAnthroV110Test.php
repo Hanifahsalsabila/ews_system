@@ -15,10 +15,9 @@ class WhoAnthroV110Test extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-        // Run both seeders to test coexistence
-        $this->seed(\Database\Seeders\WhoZscoreLmsSeeder::class);
-        $this->seed(\Database\Seeders\WhoAnthroV110Seeder::class);
+    parent::setUp();
+
+    $this->seed(\Database\Seeders\WhoAnthroV110Seeder::class);
     }
 
     public function test_canonical_files_checksum()
@@ -45,13 +44,19 @@ class WhoAnthroV110Test extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Schema::hasColumn('who_zscore_lms', 'lorh'));
     }
 
-    public function test_legacy_preservation_and_source_version_separation()
+    public function test_v1_1_0_data_is_seeded_and_source_version_is_correct()
     {
-        $legacyCount = \Illuminate\Support\Facades\DB::table('who_zscore_lms')->where('source_version', 'legacy')->count();
-        $this->assertGreaterThan(0, $legacyCount, "Legacy data should be preserved");
+    $v1Count = \Illuminate\Support\Facades\DB::table('who_zscore_lms')
+        ->where('source_version', 'who_anthro_v1.1.0')
+        ->count();
 
-        $v1Count = \Illuminate\Support\Facades\DB::table('who_zscore_lms')->where('source_version', 'who_anthro_v1.1.0')->count();
-        $this->assertGreaterThan(0, $v1Count, "v1.1.0 data should be seeded");
+    $this->assertGreaterThan(0, $v1Count, 'WHO Anthro v1.1.0 data should be seeded');
+
+    $legacyCount = \Illuminate\Support\Facades\DB::table('who_zscore_lms')
+        ->where('source_version', 'legacy')
+        ->count();
+
+    $this->assertEquals(0, $legacyCount, 'Legacy data should not be seeded by this test');
     }
 
     public function test_waz_haz_row_count_and_range()

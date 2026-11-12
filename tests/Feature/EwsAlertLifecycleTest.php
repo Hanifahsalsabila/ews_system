@@ -29,11 +29,11 @@ class EwsAlertLifecycleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        $this->seed(\Database\Seeders\WhoAnthroV110Seeder::class);
 
         $this->ewsService = app(EwsService::class);
 
-        $this->seed(\Database\Seeders\WhoZscoreLmsSeeder::class);
-        $this->seed(\Database\Seeders\WhoAnthroV110Seeder::class);
 
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Puskesmas']);
         \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Kader_Posyandu']);
@@ -586,6 +586,12 @@ class EwsAlertLifecycleTest extends TestCase
             ->where('sesi_posyandu_id', $sesiHariIni->id)
             ->firstOrFail();
 
+        $this->assertEquals(
+            'terlentang',
+            $pemeriksaan->posisi_ukur,
+            'Posisi pengukuran dari input Kader harus tersimpan di database'
+        );
+
         $kalkulasiKader = $pemeriksaan->kalkulasiZscore;
         $this->assertNotNull($kalkulasiKader);
         $this->assertContains($kalkulasiKader->ews_status, ['bahaya', 'risiko_tinggi']);
@@ -604,6 +610,12 @@ class EwsAlertLifecycleTest extends TestCase
             'lingkar_lengan' => 14.5,
         ]);
         $resBidan->assertSessionHasNoErrors();
+
+        $this->assertEquals(
+            'terlentang',
+            $pemeriksaan->fresh()->posisi_ukur,
+            'Posisi pengukuran dari input Bidan harus tersimpan di database'
+        );
 
         $kalkulasiAfterBidan = $pemeriksaan->fresh()->kalkulasiZscore;
         $this->assertEquals('normal', $kalkulasiAfterBidan->ews_status);

@@ -48,11 +48,17 @@ class PrintValuesTest extends TestCase
 
         echo "[$ind] $label (Target Z: $targetZ)\n";
         echo "  Input: " . round($val, 4) . "\n";
-        echo "  Raw Z: " . round($res['raw_zscore'], 4) . "\n"; 
+        echo "  Raw Z: " . sprintf('%.15f', $res['raw_zscore']) . "\n";
         echo "  Adjusted Z: $adjZ\n";
         echo "  Flag: " . ($flag ? 'TRUE' : 'FALSE') . "\n";
         echo "  Expected Flag: " . ($expectedFlag ? 'TRUE' : 'FALSE') . "\n";
         echo "  Status: $pass\n\n";
+
+        $this->assertSame(
+            $expectedFlag,
+            $flag,
+            "Flag tidak sesuai untuk {$ind}: {$label}. Raw Z = {$res['raw_zscore']}"
+        );
     }
 
     public function test_print()

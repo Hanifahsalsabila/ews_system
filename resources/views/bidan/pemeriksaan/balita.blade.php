@@ -123,82 +123,69 @@
                         </div>
                     </div>
 
-                    <div class="px-8 py-6 space-y-6">
-                        <!-- Antropometri -->
-                        <div class="grid grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tinggi Badan (cm)</label>
-                                <input type="number" step="0.1" name="tinggi_badan" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Berat Badan (kg)</label>
-                                <input type="number" step="0.1" name="berat_badan" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Lingkar Kepala (cm)</label>
-                                <input type="number" step="0.1" name="lingkar_kepala" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
-                            </div>
-                        </div>
+                    <!-- Antropometri -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                        <!-- Pemberian -->
-                        <div class="border-t border-slate-100 pt-5">
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Pemberian Suplemen & PMT</p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-blue-200 transition">
-                                    <input type="checkbox" name="vitamin_a" value="1" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm font-bold text-slate-700">💊 Vitamin A</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-blue-200 transition">
-                                    <input type="checkbox" name="obat_cacing" value="1" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm font-bold text-slate-700">💊 Obat Cacing</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-blue-200 transition" x-show="selectedUmur <= 6">
-                                    <input type="checkbox" name="asi_eksklusif" value="1" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm font-bold text-slate-700">🍼 ASI Eksklusif</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 cursor-pointer hover:border-blue-200 transition">
-                                    <input type="checkbox" name="pmt" value="1" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="text-sm font-bold text-slate-700">🥣 PMT (Makanan Tambahan)</span>
-                                </label>
-                            </div>
-                        </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Tinggi / Panjang Badan (cm)
+                </label>
+                <input
+                    type="number"
+                    step="0.1"
+                    min="30"
+                    max="130"
+                    name="tinggi_badan"
+                    required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+            </div>
 
-                        <!-- Imunisasi -->
-                        <div class="border-t border-slate-100 pt-5">
-                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Imunisasi (Sesuai Umur)</p>
-                            <div class="grid grid-cols-2 gap-2 text-sm">
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur <= 1">
-                                    <input type="checkbox" name="imunisasi[]" value="HB0" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">HB 0 (0-7 Hari)</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur >= 1 && selectedUmur <= 3">
-                                    <input type="checkbox" name="imunisasi[]" value="BCG, Polio 1" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">BCG, Polio 1 (1 Bulan)</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur >= 2 && selectedUmur <= 4">
-                                    <input type="checkbox" name="imunisasi[]" value="DPT-HB-Hib 1, Polio 2" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">DPT-HB-Hib 1, Polio 2 (2 Bln)</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur >= 3 && selectedUmur <= 5">
-                                    <input type="checkbox" name="imunisasi[]" value="DPT-HB-Hib 2, Polio 3" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">DPT-HB-Hib 2, Polio 3 (3 Bln)</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur >= 4 && selectedUmur <= 6">
-                                    <input type="checkbox" name="imunisasi[]" value="DPT-HB-Hib 3, Polio 4, IPV" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">DPT-HB-Hib 3, Polio 4, IPV (4 Bln)</span>
-                                </label>
-                                <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100" x-show="selectedUmur >= 9 && selectedUmur <= 12">
-                                    <input type="checkbox" name="imunisasi[]" value="Campak (MR)" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                                    <span class="font-medium text-slate-700">Campak/MR (9 Bulan)</span>
-                                </label>
-                            </div>
-                        </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Berat Badan (kg)
+                </label>
+                <input
+                    type="number"
+                    step="0.1"
+                    min="0.1"
+                    max="40"
+                    name="berat_badan"
+                    required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+            </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Keluhan / Catatan</label>
-                            <textarea name="keluhan" rows="2" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"></textarea>
-                        </div>
-                    </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Posisi Pengukuran
+                </label>
+                <select
+                    name="posisi_ukur"
+                    required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+                    <option value="">-- Pilih Posisi Pengukuran --</option>
+                    <option value="terlentang">Terlentang (Panjang Badan)</option>
+                    <option value="berdiri">Berdiri (Tinggi Badan)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                    Lingkar Kepala (cm)
+                </label>
+                <input
+                    type="number"
+                    step="0.1"
+                    min="20"
+                    max="60"
+                    name="lingkar_kepala"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+            </div>
+
+        </div>
 
                     <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-3xl">
                         <button type="button" @click="openModal = false" class="px-6 py-3 bg-white border border-slate-200 text-slate-700 font-bold text-sm rounded-xl hover:bg-slate-100 transition">Batal</button>

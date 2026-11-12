@@ -69,6 +69,25 @@ class WhoZscoreService
     }
 
     /**
+ * Calculate completed age in calendar months.
+ * Age is counted in completed calendar months, not average days per month.
+ */
+    public function calculateCompletedAgeInMonths($dob, $measurementDate): int
+    {
+        $dobDate = Carbon::parse($dob)->startOfDay();
+        $measDate = Carbon::parse($measurementDate)->startOfDay();
+
+        if ($dobDate->greaterThan($measDate)) {
+            return 0;
+        }
+
+        $age = $dobDate->diff($measDate);
+
+        return ($age->y * 12) + $age->m;
+    }
+
+    
+    /**
      * Retrieve LMS parameters for indicator, gender, and reference value.
      * Uses linear interpolation if exact point is not found.
      */
@@ -114,8 +133,24 @@ class WhoZscoreService
      */
     public function getInterpolatedLms(string $indicator, string $gender, float $referenceValue): ?array
     {
-        // Out of reference range (no extrapolation allowed)
-        if ($referenceValue < 45.0 || $referenceValue > 120.0) {
+        // Validasi rentang referensi berdasarkan indikator
+        if (in_array($indicator, ['WAZ', 'HAZ'], true)) {
+            // WAZ dan HAZ menggunakan referensi usia dalam hari.
+            // Batas atas mengikuti ketersediaan data LMS WHO.
+            if ($referenceValue < 0) {
+                return null;
+            }
+        } elseif ($indicator === 'WFL') {
+            // Weight-for-Length: panjang badan 45–110 cm.
+            if ($referenceValue < 45.0 || $referenceValue > 110.0) {
+                return null;
+            }
+        } elseif ($indicator === 'WFH') {
+            // Weight-for-Height: tinggi badan 65–120 cm.
+            if ($referenceValue < 65.0 || $referenceValue > 120.0) {
+                return null;
+            }
+        } else {
             return null;
         }
 
@@ -231,7 +266,7 @@ class WhoZscoreService
         $ageInDays = (int) floor($exactDays); // Backward compatibility fallback output
 
         // Continuous validity check: 60 completed months max valid
-        if ($this->calculateAgeInMonthsFraction($dob, $measurementDate) >= 60) {
+        if ($this->calculateCompletedAgeInMonths($dob, $measurementDate) >= 60) {
             return ['zscore' => null, 'status' => 'out_of_reference_range', 'age_in_days' => $ageInDays, 'flag' => false];
         }
 
@@ -250,12 +285,13 @@ class WhoZscoreService
 
         $adjZ = $this->applyExtremeZAdjustment($weightKg, $lms['l'], $lms['m'], $lms['s'], $rawZ);
         $displayZ = round($adjZ, 2);
-        $flag = ($adjZ < -6 || $adjZ > 5);
+        $epsilon = 1e-10;
+        $flag = ($rawZ < (-6 - $epsilon) || $rawZ > (5 + $epsilon));
 
         return [
             'zscore' => $displayZ,
             'raw_zscore' => round($rawZ, 4),
-            'status' => $this->getStatusBBU($displayZ),
+            'status' => $this->getStatusBBU($adjZ),
             'age_in_days' => $ageInDays,
             'flag' => $flag,
         ];
@@ -275,7 +311,7 @@ class WhoZscoreService
         $ageInDays = (int) floor($exactDays); 
 
         // Continuous validity check: 60 completed months max valid
-        if ($this->calculateAgeInMonthsFraction($dob, $measurementDate) >= 60) {
+        if ($this->calculateCompletedAgeInMonths($dob, $measurementDate) >= 60) {
             return ['zscore' => null, 'status' => 'out_of_reference_range', 'age_in_days' => $ageInDays, 'flag' => false];
         }
 
@@ -283,7 +319,7 @@ class WhoZscoreService
         $adjustedHeight = (float) $heightCm;
         $measurementType = 'LENGTH';
 
-        if ($roundedAge < 731) {
+        if ($exactDays < 731) {
             $measurementType = 'LENGTH';
             if (in_array(strtolower($posisiUkur), ['berdiri', 'height', 'standing'])) {
                 $adjustedHeight += 0.7; // Convert standing height to recumbent length
@@ -309,12 +345,13 @@ class WhoZscoreService
 
         // HAZ DOES NOT use extreme adjustment
         $displayZ = round($rawZ, 2);
-        $flag = (abs($rawZ) > 6);
+        $epsilon = 1e-10;
+        $flag = ($rawZ < (-6 - $epsilon) || $rawZ > (6 + $epsilon));
 
         return [
             'zscore' => $displayZ,
             'raw_zscore' => round($rawZ, 4),
-            'status' => $this->getStatusTBU($displayZ),
+            'status' => $this->getStatusTBU($rawZ),
             'adjusted_height' => $adjustedHeight,
             'age_in_days' => $ageInDays,
             'measurement_type' => $measurementType,
@@ -336,12 +373,12 @@ class WhoZscoreService
         $ageInDays = (int) floor($exactDays);
         $roundedAge = $this->roundAgeForLookup($exactDays);
 
-        if ($this->calculateAgeInMonthsFraction($dob, $measurementDate) >= 60) {
-            return [
-                'zscore' => null,
-                'status' => 'out_of_reference_range',
-                'age_in_days' => $ageInDays,
-                'flag' => false
+        if ($this->calculateCompletedAgeInMonths($dob, $measurementDate) >= 60) {
+        return [
+            'zscore' => null,
+            'status' => 'out_of_reference_range',
+            'age_in_days' => $ageInDays,
+            'flag' => false
             ];
         }
 
@@ -349,7 +386,7 @@ class WhoZscoreService
         $indicatorUsed = 'WFL';
         $measurementType = 'LENGTH';
 
-        if ($roundedAge < 731) {
+       if ($exactDays < 731) {
             $indicatorUsed = 'WFL'; // Weight-for-Length (45 - 110 cm)
             $measurementType = 'LENGTH';
             if (in_array(strtolower($posisiUkur), ['berdiri', 'height', 'standing'])) {
@@ -385,12 +422,13 @@ class WhoZscoreService
 
         $adjZ = $this->applyExtremeZAdjustment($weightKg, $lms['l'], $lms['m'], $lms['s'], $rawZ);
         $displayZ = round($adjZ, 2);
-        $flag = (abs($adjZ) > 5);
+        $epsilon = 1e-10;
+        $flag = ($rawZ < (-5 - $epsilon) || $rawZ > (5 + $epsilon));
 
         return [
             'zscore' => $displayZ,
             'raw_zscore' => round($rawZ, 4),
-            'status' => $this->getStatusBBTB($displayZ),
+            'status' => $this->getStatusBBTB($adjZ),
             'indicator_used' => $indicatorUsed,
             'measurement_type' => $measurementType,
             'age_in_days' => $ageInDays,
@@ -402,11 +440,11 @@ class WhoZscoreService
      * Standard WHO Status Classification for BB/U (Weight-for-Age).
      */
     public function getStatusBBU($zscore): string
-    {
+    {   
         if ($zscore === null) return '-';
         if ($zscore < -3) return 'Sangat Kurang (Severely Underweight)';
         if ($zscore < -2) return 'Kurang (Underweight)';
-        if ($zscore > 2) return 'Risiko Berat Badan Lebih';
+        if ($zscore > 1) return 'Risiko Berat Badan Lebih';
         return 'Normal';
     }
 

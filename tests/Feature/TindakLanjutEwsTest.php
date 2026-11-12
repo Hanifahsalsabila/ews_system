@@ -156,4 +156,22 @@ class TindakLanjutEwsTest extends TestCase
             'tinggi_badan' => 80 // Tetap sama
         ]);
     }
+
+    public function test_tindakan_wajib_diisi_sebelum_alert_dinyatakan_selesai()
+    {
+        $response = $this->actingAs($this->bidan)
+            ->patch(route('bidan.pemeriksaan.tindak-lanjut.update', $this->pemeriksaan->id), [
+                'tindakan' => '',
+                'catatan' => 'Balita perlu pemantauan lanjutan',
+            ]);
+
+        $response->assertSessionHasErrors('tindakan');
+
+        $kalkulasi = $this->pemeriksaan->kalkulasiZscore()->first();
+
+        $this->assertNotEquals('resolved', $kalkulasi->fresh()->alert_status);
+        $this->assertNull($kalkulasi->fresh()->resolved_at);
+        $this->assertNull($kalkulasi->fresh()->resolved_by);
+    }
+
 }

@@ -73,12 +73,25 @@
 
                         <!-- Tinggi Badan -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2">Tinggi/Panjang Badan</label>
-                            <div class="relative">
-                                <input type="number" step="0.1" name="tinggi_badan" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-4 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-bold text-lg" placeholder="0.0">
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">cm</span>
-                            </div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Tinggi/Panjang Badan</label>
+                        <div class="relative">
+                            <input type="number" step="0.1" name="tinggi_badan" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-4 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-bold text-lg" placeholder="0.0">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">cm</span>
                         </div>
+                    </div>
+
+                    <!-- Posisi Pengukuran -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            Posisi Pengukuran
+                        </label>
+                        <select name="posisi_ukur" required
+                            class="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-bold">
+                            <option value="">-- Pilih Posisi Pengukuran --</option>
+                            <option value="terlentang">Terlentang (Panjang Badan)</option>
+                            <option value="berdiri">Berdiri (Tinggi Badan)</option>
+                        </select>
+                    </div>
 
                         @if($warga->balita || $warga->ibuHamil)
                             <!-- Lingkar Kepala -->

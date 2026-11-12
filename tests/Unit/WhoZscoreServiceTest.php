@@ -179,4 +179,87 @@ class WhoZscoreServiceTest extends TestCase
         $this->assertNull($res61['zscore']);
         $this->assertEquals('out_of_reference_range', $res61['status']);
     }
+
+
+    /** Test 15: WAZ interpolation menggunakan usia dalam hari */
+    public function test_15_waz_interpolation_age_days(): void
+    {
+        $lms = $this->service->getInterpolatedLms('WAZ', 'L', 183.5);
+
+        $this->assertNotNull(
+            $lms,
+            'Interpolasi WAZ pada usia 183.5 hari harus tersedia.'
+        );
+
+        $this->assertTrue($lms['is_interpolated']);
+    }
+
+    /** Test 16: HAZ interpolation menggunakan usia dalam hari */
+    public function test_16_haz_interpolation_age_days(): void
+    {
+        $lms = $this->service->getInterpolatedLms('HAZ', 'L', 183.5);
+
+        $this->assertNotNull(
+            $lms,
+            'Interpolasi HAZ pada usia 183.5 hari harus tersedia.'
+        );
+
+        $this->assertTrue($lms['is_interpolated']);
+        }
+
+        /** Test 17: Completed age is 59 months before fifth birthday */
+    public function test_17_completed_age_is_59_months_before_fifth_birthday(): void
+    {
+        $age = $this->service->calculateCompletedAgeInMonths(
+            '2021-11-08',
+            '2026-11-07'
+        );
+
+        $this->assertEquals(59, $age);
+    }
+
+    /** Test 18: Completed age is 60 months on fifth birthday */
+    public function test_18_completed_age_is_60_months_on_fifth_birthday(): void
+    {
+        $age = $this->service->calculateCompletedAgeInMonths(
+            '2021-11-08',
+            '2026-11-08'
+        );
+
+        $this->assertEquals(60, $age);
+    }
+
+    /** Test 19: Klasifikasi BBU sesuai Permenkes No. 2 Tahun 2020 */
+    public function test_19_bbu_classification_boundaries(): void
+    {
+    $this->assertEquals(
+        'Sangat Kurang (Severely Underweight)',
+        $this->service->getStatusBBU(-3.01)
+    );
+
+    $this->assertEquals(
+        'Kurang (Underweight)',
+        $this->service->getStatusBBU(-3.0)
+    );
+
+    $this->assertEquals(
+        'Kurang (Underweight)',
+        $this->service->getStatusBBU(-2.01)
+    );
+
+    $this->assertEquals(
+        'Normal',
+        $this->service->getStatusBBU(-2.0)
+    );
+
+    $this->assertEquals(
+        'Normal',
+        $this->service->getStatusBBU(1.0)
+    );
+
+    $this->assertEquals(
+        'Risiko Berat Badan Lebih',
+        $this->service->getStatusBBU(1.01)
+    );
+    }
 }

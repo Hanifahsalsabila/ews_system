@@ -617,6 +617,24 @@ class EwsFinalValidationTest extends TestCase
         $this->assertLessThan(70.0, $eval['priority_score']);
     }
 
+    public function test_saw_10_skor_prioritas_gizi_lebih_meningkat_seiring_whz(): void
+    {
+        $score15 = $this->ewsService->calculatePriorityScore(
+            'waspada', 1.0, 1.0, 1.5, 0, 36
+        )['score'];
+
+        $score25 = $this->ewsService->calculatePriorityScore(
+            'waspada', 1.0, 1.0, 2.5, 0, 36
+        )['score'];
+
+        $score35 = $this->ewsService->calculatePriorityScore(
+            'waspada', 1.0, 1.0, 3.5, 0, 36
+        )['score'];
+
+        $this->assertLessThan($score25, $score15);
+        $this->assertLessThan($score35, $score25);
+    }
+
     // =========================================================================
     // GRUP D: PENGUJIAN INTEGRASI (KADER, BIDAN, ALERT, DAN TRANSAKSI)
     // =========================================================================
@@ -641,7 +659,8 @@ class EwsFinalValidationTest extends TestCase
 
         $this->assertDatabaseHas('pemeriksaan', [
             'warga_id' => $warga->id,
-            'is_validated' => 0, // Unvalidated sebelum disetujui Bidan
+            'is_validated' => 0,
+            'posisi_ukur' => 'terlentang',
         ]);
 
         $this->assertDatabaseHas('kalkulasi_zscore', [
@@ -667,6 +686,7 @@ class EwsFinalValidationTest extends TestCase
         $this->assertDatabaseHas('pemeriksaan', [
             'warga_id' => $warga->id,
             'is_validated' => 1,
+            'posisi_ukur' => 'terlentang',
         ]);
     }
 
@@ -861,4 +881,63 @@ class EwsFinalValidationTest extends TestCase
         $this->assertEquals($initialPemCount, Pemeriksaan::count());
         $this->assertEquals($initialZCount, KalkulasiZScore::count());
     }
+
+    
+    public function test_validasi_posisi_pengukuran_kader_dan_bidan()
+    {
+        $warga = $this->createBalita('Balita Validasi Posisi', 12);
+
+        // Siapkan absensi agar Kader dapat melakukan pengukuran.
+        \App\Models\Absensi::create([
+            'warga_id' => $warga->id,
+            'sesi_posyandu_id' => $this->sesi->id,
+            'jam_kehadiran' => '08:30:00',
+            'status' => 'hadir',
+        ]);
+
+        $dataKader = [
+            'tipe_kohort' => 'balita',
+            'berat_badan' => 8.0,
+            'tinggi_badan' => 72.0,
+        ];
+
+        // 1. Kader: posisi kosong harus ditolak.
+        $responseKaderKosong = $this->actingAs($this->kader)
+            ->post(route('kader.pengukuran.store', $warga->id), $dataKader);
+
+        $responseKaderKosong->assertSessionHasErrors('posisi_ukur');
+
+        // 2. Kader: posisi tidak valid harus ditolak.
+        $responseKaderTidakValid = $this->actingAs($this->kader)
+            ->post(route('kader.pengukuran.store', $warga->id), [
+                ...$dataKader,
+                'posisi_ukur' => 'miring',
+            ]);
+
+        $responseKaderTidakValid->assertSessionHasErrors('posisi_ukur');
+
+        $dataBidan = [
+            'warga_id' => $warga->id,
+            'sesi_posyandu_id' => $this->sesi->id,
+            'tipe_kohort' => 'balita',
+            'berat_badan' => 8.0,
+            'tinggi_badan' => 72.0,
+        ];
+
+        // 3. Bidan: posisi kosong harus ditolak.
+        $responseBidanKosong = $this->actingAs($this->bidan)
+            ->post(route('bidan.pemeriksaan.store'), $dataBidan);
+
+        $responseBidanKosong->assertSessionHasErrors('posisi_ukur');
+
+        // 4. Bidan: posisi tidak valid harus ditolak.
+        $responseBidanTidakValid = $this->actingAs($this->bidan)
+            ->post(route('bidan.pemeriksaan.store'), [
+                ...$dataBidan,
+                'posisi_ukur' => 'miring',
+            ]);
+
+        $responseBidanTidakValid->assertSessionHasErrors('posisi_ukur');
+    }
+
 }

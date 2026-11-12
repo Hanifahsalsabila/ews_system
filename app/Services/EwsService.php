@@ -172,11 +172,22 @@ class EwsService
             if (! $hasCompleteZscores || ! $hasCurrentWeight) {
                 $message .= " (Peringatan: Penilaian berdasarkan indikator risiko yang tersedia; beberapa data antropometri belum lengkap).";
             }
-        } elseif ($tCount == 1 || ($zBbTb !== null && $zBbTb > 2.0)) {
+        } elseif ($tCount == 1 || ($zBbTb !== null && $zBbTb > 1.0)) {
             $status = 'waspada';
-            if ($tCount == 1) $messageReasons[] = "Berat Badan tidak naik 1x (1T)";
-            if ($zBbTb !== null && $zBbTb > 2.0) $messageReasons[] = "Berisiko Gizi Lebih/Obesitas (BB/TB > 2 SD)";
 
+            if ($tCount == 1) {
+                $messageReasons[] = "Berat Badan tidak naik 1x (1T)";
+            }
+
+            if ($zBbTb !== null && $zBbTb > 1.0) {
+                if ($zBbTb <= 2.0) {
+                    $messageReasons[] = "Risiko gizi lebih (BB/TB > +1 SD sampai +2 SD)";
+                } elseif ($zBbTb <= 3.0) {
+                    $messageReasons[] = "Gizi lebih (BB/TB > +2 SD sampai +3 SD)";
+                } else {
+                    $messageReasons[] = "Obesitas (BB/TB > +3 SD)";
+                }
+            }
             $message = "⚠️ WASPADA: " . implode(' & ', $messageReasons) . ". Rekomendasi: Konseling gizi dan pantau kembali sesi posyandu berikutnya.";
             if (! $hasCompleteZscores || ! $hasCurrentWeight) {
                 $message .= " (Peringatan: Penilaian berdasarkan indikator parsial; beberapa data antropometri belum lengkap).";
@@ -197,14 +208,38 @@ class EwsService
             $message = "Pertumbuhan balita terpantau normal dan sesuai standar WHO.";
         }
 
-        // 5. Hitung Usia dalam Bulan untuk Model Prioritas
-        $ageInMonths = 12; // Fallback
-        if ($dob && $measurementDate) {
-            $dobCarbon = Carbon::parse($dob);
-            $measCarbon = Carbon::parse($measurementDate);
-            $ageInMonths = (int) $dobCarbon->diffInMonths($measCarbon);
-        } elseif ($warga->tanggal_lahir) {
-            $ageInMonths = (int) Carbon::parse($warga->tanggal_lahir)->diffInMonths(now());
+        // 5. Hitung usia berdasarkan tanggal lahir dan tanggal pemeriksaan aktual.
+        $ageInMonths = null;
+
+        $effectiveDob = $dob ?? $warga->tanggal_lahir;
+        $effectiveMeasurementDate = $measurementDate ?? $currentDate;
+
+        if ($effectiveDob && $effectiveMeasurementDate) {
+            try {
+                $dobDate = Carbon::parse($effectiveDob)->startOfDay();
+                $measurementDateValue = Carbon::parse($effectiveMeasurementDate)->startOfDay();
+
+                // Tanggal lahir setelah tanggal pemeriksaan dianggap tidak valid.
+                if ($dobDate->lessThanOrEqualTo($measurementDateValue)) {
+                    $ageInMonths = app(WhoZscoreService::class)
+                        ->calculateCompletedAgeInMonths(
+                            $effectiveDob,
+                            $effectiveMeasurementDate
+                        );
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Gagal menghitung usia balita untuk EWS.', [
+                    'warga_id' => $warga->id,
+                    'dob' => $effectiveDob,
+                    'measurement_date' => $effectiveMeasurementDate,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Usia di luar cakupan pemantauan tidak digunakan dalam skor.
+        if ($ageInMonths !== null && ($ageInMonths < 0 || $ageInMonths >= 60)) {
+            $ageInMonths = null;
         }
 
         // 6. Pemeringkatan Prioritas Risiko (Layer 2 - Multi-Criteria / SAW Model)
@@ -241,8 +276,8 @@ class EwsService
         ?float $zTbu,
         ?float $zBbTb,
         int $tCount,
-        int $ageInMonths
-    ): array {
+        ?int $ageInMonths
+    ): array{
         // Base category separation: Menjaga integritas triase klinis
         $baseScore = match ($status) {
             'bahaya' => 70.0,
@@ -253,8 +288,8 @@ class EwsService
 
         if ($status === 'normal') {
             return [
-                'score' => 0.00,
-                'details' => [
+                    'score' => 0.00,
+                    'details' => [
                     'category' => 'normal',
                     'base_score' => 0.0,
                     'composite_deficit' => 0.0,
@@ -266,8 +301,8 @@ class EwsService
 
         if ($status === 'data_tidak_lengkap') {
             return [
-                'score' => 0.00,
-                'details' => [
+                    'score' => 0.00,
+                    'details' => [
                     'category' => 'data_tidak_lengkap',
                     'base_score' => 0.0,
                     'composite_deficit' => 0.0,
@@ -277,11 +312,21 @@ class EwsService
             ];
         }
 
-        // Normalisasi defisit Z-score (0.0 s/d 1.0)
-        // Mengubah atribut cost (makin negatif makin parah) menjadi skala benefit prioritas (0.0 s/d 1.0)
+        // Normalisasi WHZ dua arah: defisit gizi dan kelebihan gizi.
         $normWhz = 0.0;
-        if ($zBbTb !== null && $zBbTb < -2.0) {
-            $normWhz = max(0.0, min(1.0, (-2.0 - $zBbTb) / 2.0));
+        $whzDirection = 'normal';
+
+        if ($zBbTb !== null) {
+            if ($zBbTb < -2.0) {
+                // Defisit gizi: semakin rendah WHZ, semakin tinggi prioritas.
+                $normWhz = max(0.0, min(1.0, (-2.0 - $zBbTb) / 2.0));
+                $whzDirection = 'defisit';
+            } elseif ($zBbTb > 1.0) {
+                // Kelebihan gizi: semakin tinggi WHZ, semakin tinggi prioritas.
+                // Normalisasi dibatasi pada +4 SD sebagai batas teknis skor.
+                $normWhz = max(0.0, min(1.0, ($zBbTb - 1.0) / 3.0));
+                $whzDirection = 'lebih';
+            }
         }
 
         $normWaz = 0.0;
@@ -302,23 +347,35 @@ class EwsService
             default => 0.0,
         };
 
-        // Normalisasi Usia (Metodologi Periode 1000 HPK):
-        // Balita <= 24 bulan berada pada periode plastisitas otak dan risiko stunting kritis (nilai normalisasi = 1.0).
-        // Balita > 24 bulan (25-59 bulan) tetap memerlukan pemantauan tetapi defisit linier lebih stabil (nilai normalisasi = 0.5).
-        $normAge = ($ageInMonths <= 24) ? 1.0 : 0.5;
+        // Normalisasi usia: hanya usia valid 0–59 bulan yang digunakan.
+        $validAge = $ageInMonths !== null
+            && $ageInMonths >= 0
+            && $ageInMonths <= 59;
 
-        // Bobot Kriteria
+        $normAge = 0.0;
+
+        if ($validAge) {
+            $normAge = ($ageInMonths <= 24) ? 1.0 : 0.5;
+        }
+
+        // Bobot kriteria.
         $wWhz = 0.35;
         $wWaz = 0.25;
         $wHaz = 0.20;
         $wT   = 0.15;
-        $wAge = 0.05;
+        $wAge = $validAge ? 0.05 : 0.0;
 
-        $compositeDeficit = ($wWhz * $normWhz) +
-                            ($wWaz * $normWaz) +
-                            ($wHaz * $normHaz) +
-                            ($wT * $normT) +
-                            ($wAge * $normAge);
+        // Normalisasi ulang bobot jika usia tidak tersedia.
+        // Dengan demikian, total bobot kriteria aktif tetap 1.0.
+        $activeWeightTotal = $wWhz + $wWaz + $wHaz + $wT + $wAge;
+
+        $compositeDeficit = (
+            ($wWhz * $normWhz) +
+            ($wWaz * $normWaz) +
+            ($wHaz * $normHaz) +
+            ($wT * $normT) +
+            ($wAge * $normAge)
+        ) / $activeWeightTotal;
 
         // Rentang skala penambahan dalam kategori adalah 29.9 poin
         $addedScore = round($compositeDeficit * 29.9, 2);
@@ -330,19 +387,51 @@ class EwsService
         $finalScore = max(0.00, min(100.00, $finalScore));
 
         $factors = [];
-        if ($normWhz > 0) $factors[] = "Defisit Akut BB/TB (" . round($zBbTb, 2) . ")";
-        if ($normHaz > 0) $factors[] = "Defisit Stunting TB/U (" . round($zTbu, 2) . ")";
-        if ($normWaz > 0) $factors[] = "Defisit Bobot BB/U (" . round($zBbu, 2) . ")";
-        if ($tCount > 0) $factors[] = "Tren {$tCount}T";
-        if ($ageInMonths <= 24) $factors[] = "Periode Emas (<=24 bln)";
+
+        if ($normWhz > 0) {
+            if ($whzDirection === 'defisit') {
+                $factors[] = "Defisit Akut BB/TB (" . round($zBbTb, 2) . ")";
+            } elseif ($whzDirection === 'lebih') {
+                $factors[] = "Indikasi Kelebihan Gizi BB/TB (" . round($zBbTb, 2) . ")";
+            }
+        }
+
+        if ($normHaz > 0) {
+            $factors[] = "Defisit Stunting TB/U (" . round($zTbu, 2) . ")";
+        }
+
+        if ($normWaz > 0) {
+            $factors[] = "Defisit Bobot BB/U (" . round($zBbu, 2) . ")";
+        }
+
+        if ($tCount > 0) {
+            $factors[] = "Tren {$tCount}T";
+        }
+
+        if ($validAge && $ageInMonths <= 24) {
+            $factors[] = "Periode Emas (<=24 bln)";
+        } elseif ($validAge && $ageInMonths > 24) {
+            $factors[] = "Usia 25–59 bulan";
+        }
 
         return [
-            'score' => $finalScore,
-            'details' => [
+                'score' => $finalScore,
+                'details' => [
                 'category' => $status,
                 'base_score' => $baseScore,
                 'composite_deficit' => round($compositeDeficit, 4),
                 'added_score' => $addedScore,
+                'age_in_months' => $ageInMonths,
+                'age_weight_applied' => $validAge,
+                'age_normalized' => $normAge,
+                'active_weight_total' => round($activeWeightTotal, 4),
+                'weights' => [
+                    'whz' => $wWhz,
+                    'waz' => $wWaz,
+                    'haz' => $wHaz,
+                    'trend' => $wT,
+                    'age' => $wAge,
+                ],
                 'factors' => $factors,
                 'summary' => count($factors) > 0 ? implode(', ', $factors) : 'Risiko terisolasi',
             ]

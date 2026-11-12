@@ -85,6 +85,10 @@ class PengukuranController extends Controller
         $validated = $request->validate([
             'berat_badan' => $isBalita ? 'required|numeric|min:0.1' : 'nullable|numeric',
             'tinggi_badan' => $isBalita ? 'required|numeric|min:10' : 'nullable|numeric',
+            'posisi_ukur' => [
+                $isBalita ? 'required' : 'nullable',
+                'in:terlentang,berdiri',
+            ],
             'lingkar_kepala' => 'nullable|numeric',
             'lingkar_lengan' => 'nullable|numeric',
             'tensi_darah' => 'nullable|string',
@@ -108,7 +112,7 @@ class PengukuranController extends Controller
                 'tipe_kohort' => $tipeKohort,
                 'berat_badan' => $validated['berat_badan'] ?? null,
                 'tinggi_badan' => $validated['tinggi_badan'] ?? null,
-                'posisi_ukur' => $request->input('posisi_ukur', 'terlentang'),
+                'posisi_ukur' => $validated['posisi_ukur'] ?? null,
                 'lingkar_kepala' => $validated['lingkar_kepala'] ?? null,
                 'lingkar_lengan' => $validated['lingkar_lengan'] ?? null,
                 'tensi_darah' => $validated['tensi_darah'] ?? null,
@@ -123,7 +127,7 @@ class PengukuranController extends Controller
                     $dob = $wargaWithBalita->tanggal_lahir;
                     $sessionDate = $activeSession->tanggal;
                     $gender = $wargaWithBalita->jenis_kelamin;
-                    $posisiUkur = $request->input('posisi_ukur', 'terlentang');
+                    $posisiUkur = $pemeriksaan->posisi_ukur;
 
                     $zscoreService = app(WhoZscoreService::class);
 

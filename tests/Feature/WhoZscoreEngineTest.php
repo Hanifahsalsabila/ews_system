@@ -40,8 +40,8 @@ class WhoZscoreEngineTest extends TestCase
     public function test_waz_golden_vectors()
     {
         $vectors = [
-            ['gender' => 'L', 'age' => 0, 'val' => 3.3, 'raw_z' => -0.0954, 'adj_z' => -0.0954, 'final' => -0.1, 'flag' => false],
-            ['gender' => 'P', 'age' => 0, 'val' => 3.2, 'raw_z' => -0.0705, 'adj_z' => -0.0705, 'final' => -0.07, 'flag' => false],
+            ['gender' => 'L', 'age' => 1825, 'val' => 18.3, 'raw_z' => -0.012, 'adj_z' => -0.012, 'final' => -0.01, 'flag' => false],
+            ['gender' => 'P', 'age' => 1825, 'val' => 18.2, 'raw_z' => -0.0045, 'adj_z' => -0.0045, 'final' => 0.00, 'flag' => false],
             ['gender' => 'L', 'age' => 30, 'val' => 4.5, 'raw_z' => 0.0792, 'adj_z' => 0.0792, 'final' => 0.08, 'flag' => false],
             ['gender' => 'P', 'age' => 30, 'val' => 4.2, 'raw_z' => 0.0494, 'adj_z' => 0.0494, 'final' => 0.05, 'flag' => false],
             ['gender' => 'L', 'age' => 365, 'val' => 9.6, 'raw_z' => -0.0437, 'adj_z' => -0.0437, 'final' => -0.04, 'flag' => false],
@@ -50,15 +50,21 @@ class WhoZscoreEngineTest extends TestCase
             ['gender' => 'P', 'age' => 730, 'val' => 11.5, 'raw_z' => 0.0182, 'adj_z' => 0.0182, 'final' => 0.02, 'flag' => false],
             ['gender' => 'L', 'age' => 731, 'val' => 12.2, 'raw_z' => 0.0325, 'adj_z' => 0.0325, 'final' => 0.03, 'flag' => false],
             ['gender' => 'P', 'age' => 731, 'val' => 11.5, 'raw_z' => 0.0134, 'adj_z' => 0.0134, 'final' => 0.01, 'flag' => false],
-            ['gender' => 'L', 'age' => 1826, 'val' => 18.3, 'raw_z' => -0.0142, 'adj_z' => -0.0142, 'final' => -0.01, 'flag' => false],
-            ['gender' => 'P', 'age' => 1826, 'val' => 18.2, 'raw_z' => -0.0066, 'adj_z' => -0.0066, 'final' => -0.01, 'flag' => false],
         ];
 
         foreach ($vectors as $vec) {
             [$dob, $meas] = $this->getTestDob($vec['age']);
             $res = $this->service->calculateBBU($vec['val'], $dob, $meas, $vec['gender']);
             
-            $this->assertNotNull($res['zscore']);
+            $this->assertNotNull(
+            $res['zscore'],
+            sprintf(
+                'WAZ gagal: gender=%s, usia=%s hari, status=%s',
+                $vec['gender'],
+                $vec['age'],
+                $res['status'] ?? 'null'
+            )
+        );
             $this->assertEqualsWithDelta($vec['raw_z'], $res['raw_zscore'], 0.0001);
             $this->assertEquals($vec['final'], $res['zscore']);
             $this->assertEquals($vec['flag'], $res['flag']);
@@ -68,14 +74,12 @@ class WhoZscoreEngineTest extends TestCase
     public function test_haz_golden_vectors()
     {
         $vectors = [
-            ['gender' => 'L', 'age' => 0, 'val' => 49.9, 'raw_z' => 0.0083, 'final' => 0.01, 'flag' => false],
-            ['gender' => 'P', 'age' => 0, 'val' => 49.1, 'raw_z' => -0.0256, 'final' => -0.03, 'flag' => false],
+            ['gender' => 'L', 'age' => 1825, 'val' => 110.0, 'raw_z' => 0.0126, 'final' => 0.01, 'flag' => false],
+            ['gender' => 'P', 'age' => 1825, 'val' => 109.4, 'raw_z' => -0.0003, 'final' => 0.00, 'flag' => false],
             ['gender' => 'L', 'age' => 730, 'val' => 87.1, 'raw_z' => -0.2297, 'final' => -0.23, 'flag' => false],
             ['gender' => 'P', 'age' => 730, 'val' => 85.7, 'raw_z' => -0.2173, 'final' => -0.22, 'flag' => false],
             ['gender' => 'L', 'age' => 731, 'val' => 86.4, 'raw_z' => -0.2389, 'final' => -0.24, 'flag' => false],
             ['gender' => 'P', 'age' => 731, 'val' => 85.0, 'raw_z' => -0.2262, 'final' => -0.23, 'flag' => false],
-            ['gender' => 'L', 'age' => 1826, 'val' => 110.0, 'raw_z' => 0.0088, 'final' => 0.01, 'flag' => false],
-            ['gender' => 'P', 'age' => 1826, 'val' => 109.4, 'raw_z' => -0.0040, 'final' => 0.00, 'flag' => false],
         ];
 
         foreach ($vectors as $vec) {
@@ -84,7 +88,15 @@ class WhoZscoreEngineTest extends TestCase
             
             $res = $this->service->calculateTBU($vec['val'], $dob, $meas, $vec['gender'], $posisi);
             
-            $this->assertNotNull($res['zscore']);
+            $this->assertNotNull(
+            $res['zscore'],
+            sprintf(
+                'HAZ gagal: gender=%s, usia=%s hari, status=%s',
+                $vec['gender'],
+                $vec['age'],
+                $res['status'] ?? 'null'
+            )
+        );
             $this->assertEqualsWithDelta($vec['raw_z'], $res['raw_zscore'], 0.0001);
             $this->assertEquals($vec['final'], $res['zscore']);
             $this->assertEquals($vec['flag'], $res['flag']);
@@ -140,40 +152,150 @@ class WhoZscoreEngineTest extends TestCase
         $this->assertEquals(0.03, $res['zscore']);
     }
 
-    public function test_continuous_boundary_tests()
+    public function test_exact_731_days_measurement_transition()
     {
-        $validEdges = [1826.00, 1826.24];
-        foreach ($validEdges as $edge) {
-            [$dob, $meas] = $this->getTestDob($edge);
-            $res = $this->service->calculateBBU(18.3, $dob, $meas, 'L');
-            $this->assertNotNull($res['zscore']); 
-        }
+    // Usia 730,5 hari: masih menggunakan LENGTH dan WFL
+    // Meskipun pembulatan usia LMS menghasilkan 731 hari.
+    [$dob, $meas] = $this->getTestDob(730.5);
 
-        $invalidEdges = [1826.25, 1826.26, 1826.49, 1826.50, 1827.00];
-        foreach ($invalidEdges as $edge) {
-            [$dob, $meas] = $this->getTestDob($edge);
-            $res = $this->service->calculateBBU(18.3, $dob, $meas, 'L');
-            $this->assertNull($res['zscore']); 
-            $this->assertEquals('out_of_reference_range', $res['status']);
-        }
+    $tbu = $this->service->calculateTBU(
+        80.0, $dob, $meas, 'L', 'berdiri'
+    );
+
+    $this->assertSame('LENGTH', $tbu['measurement_type']);
+    $this->assertEqualsWithDelta(
+        80.7,
+        $tbu['adjusted_height'],
+        0.0001
+    );
+
+    $bbtb = $this->service->calculateBBTB(
+        10.0, 80.0, $dob, $meas, 'L', 'berdiri'
+    );
+
+    $this->assertSame('WFL', $bbtb['indicator_used']);
+    $this->assertSame('LENGTH', $bbtb['measurement_type']);
+
+    // Usia 730,99 hari: tetap menggunakan LENGTH dan WFL.
+    [$dob, $meas] = $this->getTestDob(730.99);
+
+    $tbu = $this->service->calculateTBU(
+        80.0, $dob, $meas, 'L', 'berdiri'
+    );
+
+    $this->assertSame('LENGTH', $tbu['measurement_type']);
+    $this->assertEqualsWithDelta(
+        80.7,
+        $tbu['adjusted_height'],
+        0.0001
+    );
+
+    $bbtb = $this->service->calculateBBTB(
+        10.0, 80.0, $dob, $meas, 'L', 'berdiri'
+    );
+
+    $this->assertSame('WFL', $bbtb['indicator_used']);
+
+    // Usia tepat 731 hari: beralih ke HEIGHT dan WFH.
+    [$dob, $meas] = $this->getTestDob(731.0);
+
+    $tbu = $this->service->calculateTBU(
+        80.0, $dob, $meas, 'L', 'terlentang'
+    );
+
+    $this->assertSame('HEIGHT', $tbu['measurement_type']);
+    $this->assertEqualsWithDelta(
+        79.3,
+        $tbu['adjusted_height'],
+        0.0001
+    );
+
+    $bbtb = $this->service->calculateBBTB(
+        10.0, 80.0, $dob, $meas, 'L', 'terlentang'
+    );
+
+    $this->assertSame('WFH', $bbtb['indicator_used']);
+    $this->assertSame('HEIGHT', $bbtb['measurement_type']);
+
+    // Usia 731,25 hari: tetap menggunakan HEIGHT dan WFH.
+    [$dob, $meas] = $this->getTestDob(731.25);
+
+    $tbu = $this->service->calculateTBU(
+        80.0, $dob, $meas, 'L', 'terlentang'
+    );
+
+    $this->assertSame('HEIGHT', $tbu['measurement_type']);
+    $this->assertEqualsWithDelta(
+        79.3,
+        $tbu['adjusted_height'],
+        0.0001
+    );
+
+    $bbtb = $this->service->calculateBBTB(
+        10.0, 80.0, $dob, $meas, 'L', 'terlentang'
+    );
+
+    $this->assertSame('WFH', $bbtb['indicator_used']);
     }
 
-    public function test_bbtb_continuous_boundary_tests()
+    public function test_completed_calendar_month_boundary_for_bbu()
     {
-        $validEdges = [1826.00, 1826.24];
-        foreach ($validEdges as $edge) {
-            [$dob, $meas] = $this->getTestDob($edge);
-            $res = $this->service->calculateBBTB(18.3, 110.0, $dob, $meas, 'L');
-            $this->assertNotNull($res['zscore']); 
-        }
+    // Usia 59 bulan penuh: masih termasuk cakupan.
+    $dob = '2021-11-08';
+    $meas = '2026-11-07';
 
-        $invalidEdges = [1826.25, 1826.26, 1826.49, 1826.50, 1827.00];
-        foreach ($invalidEdges as $edge) {
-            [$dob, $meas] = $this->getTestDob($edge);
-            $res = $this->service->calculateBBTB(18.3, 110.0, $dob, $meas, 'L');
-            $this->assertNull($res['zscore']); 
-            $this->assertEquals('out_of_reference_range', $res['status']);
-        }
+    $res = $this->service->calculateBBU(
+        18.3,
+        $dob,
+        $meas,
+        'L'
+    );
+
+    $this->assertNotNull($res['zscore']);
+
+    // Tepat usia 60 bulan: sudah di luar cakupan.
+    $meas = '2026-11-08';
+
+    $res = $this->service->calculateBBU(
+        18.3,
+        $dob,
+        $meas,
+        'L'
+    );
+
+    $this->assertNull($res['zscore']);
+    $this->assertEquals('out_of_reference_range', $res['status']);
+    }
+
+    public function test_completed_calendar_month_boundary_for_bbtb()
+    {
+    // Usia 59 bulan penuh: masih termasuk cakupan.
+    $dob = '2021-11-08';
+    $meas = '2026-11-07';
+
+    $res = $this->service->calculateBBTB(
+        18.3,
+        110.0,
+        $dob,
+        $meas,
+        'L'
+    );
+
+    $this->assertNotNull($res['zscore']);
+
+    // Tepat usia 60 bulan: sudah di luar cakupan.
+    $meas = '2026-11-08';
+
+    $res = $this->service->calculateBBTB(
+        18.3,
+        110.0,
+        $dob,
+        $meas,
+        'L'
+    );
+
+    $this->assertNull($res['zscore']);
+    $this->assertEquals('out_of_reference_range', $res['status']);
     }
 
     public function test_invalid_range_wfl_wfh()
